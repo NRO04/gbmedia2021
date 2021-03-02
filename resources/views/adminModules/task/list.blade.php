@@ -802,6 +802,38 @@ $("#btn-create-folder").on("click" , function(){
     });
 });
 
+function displayCustomTask(folderId){
+	
+	$("#task-table_info").css("display","none");
+
+	if(folderId == 'midUrgencyFolder' ){
+		$(".lowUrgencyTask").css("display","none");	
+		$(".highUrgencyTask").css("display","none");
+		$(".midUrgencyTask").css("display","");
+		$(".expiredTask").css("display","none");			
+		$("#midUrgencyFolder").css("color","gold");
+		$("#lowUrgencyFolder").css("color","darkolivegreen");
+		$("#highUrgencyFolder").css("color","brown");
+	}else if(folderId == 'highUrgencyFolder'){
+		$(".lowUrgencyTask").css("display","none");	
+		$(".highUrgencyTask").css("display","");
+		$(".midUrgencyTask").css("display","none");	
+		$(".expiredTask").css("display","");		
+		$("#midUrgencyFolder").css("color","darkgoldenrod");
+		$("#lowUrgencyFolder").css("color","darkolivegreen");
+		$("#highUrgencyFolder").css("color","red");
+	}else{
+		$(".lowUrgencyTask").css("display","");	
+		$(".highUrgencyTask").css("display","none");
+		$(".midUrgencyTask").css("display","none");
+		$(".expiredTask").css("display","none");				
+		$("#midUrgencyFolder").css("color","darkgoldenrod");
+		$("#lowUrgencyFolder").css("color","green");
+		$("#highUrgencyFolder").css("color","brown");
+	}
+	
+}
+
 function ShowTaskFolder(status,folder)
 {
 	seeing = {

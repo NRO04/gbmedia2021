@@ -228,6 +228,38 @@ class TaskController extends Controller
                     ->addColumn('DT_RowId', function($row){
                         return 'row_'.$row->id;
                     })
+                    ->addColumn('DT_RowClass', function($row){
+                                              
+                        $currentDate = date("Y-m-d h:i:sa");
+
+                        $interval = (strtotime($row->should_finish)- strtotime($currentDate))/(60*60);
+
+                        $taskClass = "";
+
+                        if($interval<24 && $interval>0){
+                            $taskClass = "highUrgencyTask";
+                        }else if(24<$interval && $interval<48){
+                            $taskClass = "midUrgencyTask";
+                        }else if(0>$interval){
+                            $taskClass = "expiredTask";
+                        }else{
+                            $taskClass = "lowUrgencyTask";
+                        }
+
+                        $createdByUser = "";
+
+                        if(Auth::user()->id == $row->created_by){
+                            $createdByUser = "createByUser";
+                        }
+
+                        $taskStatus = "activeTask";
+
+                        if($row->status == 1){
+                            $taskStatus = "finnishedTask";
+                        }
+
+                        return $createdByUser.' '.$taskClass.' '.$taskStatus;
+                    })
                     ->addColumn('bolt', function($row){
                         $active = ($row->pulsing == 1 && $row->status == 0)? "pulsing-active" : "";
                         $result = "<i class='fas fa-bolt $active' id='pulsing-{$row->id}'></i>";
@@ -398,6 +430,41 @@ class TaskController extends Controller
         $count = TaskUserStatus::where('user_id', '=', Auth::user()->id)->where('status', '=', 1)->count();
         $result .= $this->createFolderStructure("Finalizados" , 0, 1, 0, $active);
         return $result;
+
+        $result .=  "<div id='highUrgencyFolder' class='col-lg-12 d-flex pr-0 pl-1 taskFolder' 
+                        onclick='displayCustomTask(this.id)' 
+                        style='cursor: pointer;color:brown'>
+                        <div class='col-lg-2 pr-0 pl-0'>
+                            <i class='fas fa-arrow-alt-circle-up'></i>
+                        </div>
+                        <div class='col-lg-10 pr-0 pl-0'>
+                            <label style='cursor: pointer'> Urgentes</label>
+                        </div>
+                        
+                    </div>";
+     
+        $result .=  "<div id='midUrgencyFolder' class='col-lg-12 d-flex pr-0 pl-1 taskFolder' 
+                        onclick='displayCustomTask(this.id)' 
+                        style='cursor: pointer;color:darkgoldenrod'>
+                        <div class='col-lg-2 pr-0 pl-0'>
+                            <i class='fas fa-arrow-alt-circle-right'></i>
+                        </div>
+                        <div class='col-lg-10 pr-0 pl-0'>
+                            <label style='cursor: pointer'> Media</label>
+                        </div>
+                    </div>";
+
+        $result .=  "<div id='lowUrgencyFolder' class='col-lg-12 d-flex pr-0 pl-1 taskFolder' 
+                        onclick='displayCustomTask(this.id)' 
+                        style='cursor: pointer;color:darkolivegreen'>
+                        <div class='col-lg-2 pr-0 pl-0'>
+                            <i class='fas fa-arrow-alt-circle-down'></i>
+                        </div>
+                        <div class='col-lg-10 pr-0 pl-0'>
+                            <label style='cursor: pointer'> Baja</label>
+                        </div>
+                    </div>";
+
     }
 
     public function createFolderStructure($folder_name, $badge, $status, $folder, $active)
