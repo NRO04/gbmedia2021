@@ -21,7 +21,7 @@ use Stancl\Tenancy\Middleware\PreventAccessFromCentralDomains;
 
 Route::get('test', function () {
     $message['message'] = "New Post Created!!!!";
-    event(new App\Events\NewPost($message));
+    event(new App\Events\NewPost($message)); 
     return "Event has been sent!";
 });
 
@@ -767,6 +767,9 @@ Route::group(['prefix' => 'setting', 'as' => 'setting.', 'middleware' => ['auth'
     Route::group(['prefix' => 'page', 'as' => 'page.'], function () {
         Route::get('/', 'Settings\PageController@viewPages')->name('list');
         Route::get('/get', 'Settings\PageController@getPages')->name('get_pages');
+        Route::post('/createTask', 'Settings\PageController@createTask')->name('create_task');
+        Route::get('/task/get', 'Settings\PageController@gTask')->name('get_tasks');
+        Route::put('/task/update', 'Settings\PageController@updateTask')->name('update_task');
     });
 });
 

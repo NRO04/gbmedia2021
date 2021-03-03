@@ -29,22 +29,22 @@ class TaskController extends Controller
 
     public function list()
     {
-    	$roles = SettingRole::orderBy('name', 'ASC')->get();
-    	$users = User::where('setting_role_id' , '!=' , 14)->where('status', 1)->orderBy('first_name' , 'ASC')->get();
-    	$models = User::where('setting_role_id' , '=' , 14)->where('status', 1)->orderBy('nick' , 'ASC')->get();
+        $roles = SettingRole::orderBy('name', 'ASC')->get();
+        $users = User::where('setting_role_id', '!=', 14)->where('status', 1)->orderBy('first_name', 'ASC')->get();
+        $models = User::where('setting_role_id', '=', 14)->where('status', 1)->orderBy('nick', 'ASC')->get();
         return view('adminModules.task.list')->with([
-        	'roles' => $roles,
-        	'users' => $users,
-        	'models' => $models,
+            'roles' => $roles,
+            'users' => $users,
+            'models' => $models,
         ]);
     }
 
-	public function generateCode()
+    public function generateCode()
     {
         $random_letters = substr(str_shuffle("ABCDEFGHIJKLMNOPQRSTUVWXYZ"), 0, 3);
         $random_numbers = substr(str_shuffle("0123456789"), 0, 4);
         $code = $random_letters . $random_numbers;
-        $exists = Task::where('code' , '=', $code)->exists();
+        $exists = Task::where('code', '=', $code)->exists();
         if ($exists) {
             $this->generateCode();
         }
@@ -54,16 +54,18 @@ class TaskController extends Controller
     public function store(Request $request)
     {
         $this->folderExists('task');
-        $this->validate($request,
-        [
-            'title' => 'required|max:150',
-            'comment' => 'required',
-        ],
-        [
-            'title.required' => 'Este campo es obligatorio',
-            'title.max' => 'Este campo no debe exceder los :max caracteres',
-            'comment.required' => 'Este campo es obligatorio',
-        ]);
+        $this->validate(
+            $request,
+            [
+                'title' => 'required|max:150',
+                'comment' => 'required',
+            ],
+            [
+                'title.required' => 'Este campo es obligatorio',
+                'title.max' => 'Este campo no debe exceder los :max caracteres',
+                'comment.required' => 'Este campo es obligatorio',
+            ]
+        );
 
         try {
             DB::beginTransaction();
@@ -72,17 +74,15 @@ class TaskController extends Controller
 
             $radio_time = $request->time_aprox;
             if ($radio_time == 'option-hours') {
-            	$time = $request->input('select_hours');
-            	$time = "+".$time." hours";
-            }
-            else
-            {
-            	$time = $request->input('select_days');
-            	$time = "+".$time." day";
+                $time = $request->input('select_hours');
+                $time = "+" . $time . " hours";
+            } else {
+                $time = $request->input('select_days');
+                $time = "+" . $time . " day";
             }
             $should_finish = date('Y-m-d H:i:s');
-            $should_finish = strtotime($time , strtotime($should_finish));
-            $should_finish = date('Y-m-d H:i:s' , $should_finish);
+            $should_finish = strtotime($time, strtotime($should_finish));
+            $should_finish = date('Y-m-d H:i:s', $should_finish);
 
             $task = new Task();
             $task->created_by_type = 1;
@@ -94,26 +94,24 @@ class TaskController extends Controller
             $task->code = $this->generateCode();
             $task->save();
 
-            $requestObj = new Request(array('receivers' => $receivers , 'task_id' => $task->id, 'from_add_receivers' => 0));
+            $requestObj = new Request(array('receivers' => $receivers, 'task_id' => $task->id, 'from_add_receivers' => 0));
             $this->addReceivers($requestObj);
 
 
             //add all gerentes
-            $users = User::where('setting_role_id', '=' , 1)->get();
-                foreach ($users as $key => $user) {
-                    $exists = TaskUserStatus::where('user_id', '=', $user->id)->where('task_id', '=', $task->id)->exists();
-                    if ($exists == false)
-                    {
-                        $task_user_status = new TaskUserStatus();
-                        $task_user_status->task_id = $task->id;
-                        $task_user_status->user_id = $user->id;
-                        $task_user_status->save();
-                    }
+            $users = User::where('setting_role_id', '=', 1)->get();
+            foreach ($users as $key => $user) {
+                $exists = TaskUserStatus::where('user_id', '=', $user->id)->where('task_id', '=', $task->id)->exists();
+                if ($exists == false) {
+                    $task_user_status = new TaskUserStatus();
+                    $task_user_status->task_id = $task->id;
+                    $task_user_status->user_id = $user->id;
+                    $task_user_status->save();
                 }
+            }
 
             $exists = TaskUserStatus::where('user_id', '=', Auth::user()->id)->where('task_id', '=', $task->id)->exists();
-            if ($exists == false)
-            {
+            if ($exists == false) {
                 $task_user_status = new TaskUserStatus();
                 $task_user_status->task_id = $task->id;
                 $task_user_status->user_id = Auth::user()->id;
@@ -126,10 +124,9 @@ class TaskController extends Controller
             $task_comment->comment = $request->input('comment');
             $task_comment->save();
 
-            if ($request->file('inputfile'))
-            {
+            if ($request->file('inputfile')) {
                 $files = $request->file('inputfile');
-                foreach($files as $file){
+                foreach ($files as $file) {
                     $task_comment_attachment = new TaskCommentAttachment();
                     $task_comment_attachment->task_comments_id = $task_comment->id;
                     $task_comment_attachment->file = $this->uploadFile($file, 'task');
@@ -138,20 +135,17 @@ class TaskController extends Controller
             }
 
 
-           $receivers = TaskUserStatus::where('task_id' ,  $task->id)->get();
+            $receivers = TaskUserStatus::where('task_id',  $task->id)->get();
             foreach ($receivers as $receiver) {
                 $user = $receiver->user;
-                if ($user->id != Auth::user()->id)
-                {
+                if ($user->id != Auth::user()->id) {
                     //$user->notify(new TaskCommentNotification($task_comment, $task));
                 }
-
             }
 
 
             DB::commit();
             return response()->json(['success' => true]);
-
         } catch (Exception $e) {
             DB::rollback();
             return response()->json(['success' => false]);
@@ -160,14 +154,16 @@ class TaskController extends Controller
 
     public function storeFolder(Request $request)
     {
-        $this->validate($request,
-        [
-            'name_folder' => 'required|max:17',
-        ],
-        [
-            'name_folder.required' => 'Este campo es obligatorio',
-            'name_folder.max' => 'Este campo no debe exceder los :max caracteres',
-        ]);
+        $this->validate(
+            $request,
+            [
+                'name_folder' => 'required|max:17',
+            ],
+            [
+                'name_folder.required' => 'Este campo es obligatorio',
+                'name_folder.max' => 'Este campo no debe exceder los :max caracteres',
+            ]
+        );
 
         $folder = new TaskUserFolder();
         $folder->name = $request->name_folder;
@@ -184,35 +180,33 @@ class TaskController extends Controller
             if ($request->seeing['status'] == 0 && $request->seeing['folder'] == 0) {
 
                 $data = Task::join('task_user_status', 'tasks.id', '=', 'task_user_status.task_id')
-                ->select("tasks.*", 'task_user_status.status as status_user', 'task_user_status.id as task_status_id', 'task_user_status.pulsing as pulsing')
-                ->where('task_user_status.user_id', '=', Auth::user()->id)
-                ->where('task_user_status.status', '=', 0)
-                ->where('task_user_status.folder', '=', 0)
-                ->where('tasks.status', '=', 0)
-                ->orderBy('pulsing', 'desc')->orderBy('task_user_status.created_at', 'asc')->get();
+                    ->select("tasks.*", 'task_user_status.status as status_user', 'task_user_status.id as task_status_id', 'task_user_status.pulsing as pulsing')
+                    ->where('task_user_status.user_id', '=', Auth::user()->id)
+                    ->where('task_user_status.status', '=', 0)
+                    ->where('task_user_status.folder', '=', 0)
+                    ->where('tasks.status', '=', 0)
+                    ->orderBy('pulsing', 'desc')->orderBy('task_user_status.created_at', 'asc')->get();
             }
             //en alguna carpeta
-            elseif($request->seeing['status'] == 0 && $request->seeing['folder'] != 0) {
+            elseif ($request->seeing['status'] == 0 && $request->seeing['folder'] != 0) {
 
                 $data = Task::join('task_user_status', 'tasks.id', '=', 'task_user_status.task_id')
-                ->select("tasks.*", 'task_user_status.status as status_user', 'task_user_status.id as task_status_id', 'task_user_status.pulsing as pulsing')
-                ->where('task_user_status.user_id', '=', Auth::user()->id)
-                ->where('task_user_status.status', '=', 0)
-                ->where('task_user_status.folder', '=', $request->seeing['folder'])
-                ->where('tasks.status', '=', 0)
-                ->orderBy('pulsing', 'desc')->orderBy('task_user_status.created_at', 'asc')->get();
-
+                    ->select("tasks.*", 'task_user_status.status as status_user', 'task_user_status.id as task_status_id', 'task_user_status.pulsing as pulsing')
+                    ->where('task_user_status.user_id', '=', Auth::user()->id)
+                    ->where('task_user_status.status', '=', 0)
+                    ->where('task_user_status.folder', '=', $request->seeing['folder'])
+                    ->where('tasks.status', '=', 0)
+                    ->orderBy('pulsing', 'desc')->orderBy('task_user_status.created_at', 'asc')->get();
             }
             //finalizados
-            else
-            {
+            else {
                 $data = Task::join('task_user_status', 'tasks.id', '=', 'task_user_status.task_id')
-                ->select("tasks.*", 'task_user_status.status as status_user', 'task_user_status.id as task_status_id', 'task_user_status.pulsing as pulsing')
-                ->where('task_user_status.user_id', '=', Auth::user()->id)
-                ->where('task_user_status.status', '=', 1)
-                ->orWhere('task_user_status.user_id', '=', Auth::user()->id)
-                ->where('tasks.status', 1)
-                ->orderBy('pulsing', 'desc')->orderBy('task_user_status.created_at', 'asc')->get();
+                    ->select("tasks.*", 'task_user_status.status as status_user', 'task_user_status.id as task_status_id', 'task_user_status.pulsing as pulsing')
+                    ->where('task_user_status.user_id', '=', Auth::user()->id)
+                    ->where('task_user_status.status', '=', 1)
+                    ->orWhere('task_user_status.user_id', '=', Auth::user()->id)
+                    ->where('tasks.status', 1)
+                    ->orderBy('pulsing', 'desc')->orderBy('task_user_status.created_at', 'asc')->get();
 
                 /*$data = Task::join('task_user_status', 'tasks.id', '=', 'task_user_status.task_id')
                     ->select("tasks.*", 'task_user_status.status as status_user', 'task_user_status.id as task_status_id', 'task_user_status.pulsing as pulsing')
@@ -224,156 +218,135 @@ class TaskController extends Controller
 
 
             return DataTables::of($data)
-                    ->addIndexColumn()
-                    ->addColumn('DT_RowId', function($row){
-                        return 'row_'.$row->id;
-                    })
-                    ->addColumn('DT_RowClass', function($row){
-                                              
-                        $currentDate = date("Y-m-d h:i:sa");
+                ->addIndexColumn()
+                ->addColumn('DT_RowId', function ($row) {
+                    return 'row_' . $row->id;
+                })
+                ->addColumn('DT_RowClass', function ($row) {
 
-                        $interval = (strtotime($row->should_finish)- strtotime($currentDate))/(60*60);
+                    $currentDate = date("Y-m-d h:i:sa");
 
-                        $taskClass = "";
+                    $interval = (strtotime($row->should_finish) - strtotime($currentDate)) / (60 * 60);
 
-                        if($interval<24 && $interval>0){
-                            $taskClass = "highUrgencyTask";
-                        }else if(24<$interval && $interval<48){
-                            $taskClass = "midUrgencyTask";
-                        }else if(0>$interval){
-                            $taskClass = "expiredTask";
-                        }else{
-                            $taskClass = "lowUrgencyTask";
-                        }
+                    $taskClass = "";
 
-                        $createdByUser = "";
+                    if ($interval < 24 && $interval > 0) {
+                        $taskClass = "highUrgencyTask";
+                    } else if (24 < $interval && $interval < 72) {
+                        $taskClass = "midUrgencyTask";
+                    } else if (0 > $interval) {
+                        $taskClass = "expiredTask";
+                    } else {
+                        $taskClass = "lowUrgencyTask";
+                    }
 
-                        if(Auth::user()->id == $row->created_by){
-                            $createdByUser = "createByUser";
-                        }
+                    $createdByUser = "";
 
-                        $taskStatus = "activeTask";
+                    if (Auth::user()->id == $row->created_by) {
+                        $createdByUser = "createByUser";
+                    }
 
-                        if($row->status == 1){
-                            $taskStatus = "finnishedTask";
-                        }
+                    $taskStatus = "activeTask";
 
-                        return $createdByUser.' '.$taskClass.' '.$taskStatus;
-                    })
-                    ->addColumn('bolt', function($row){
-                        $active = ($row->pulsing == 1 && $row->status == 0)? "pulsing-active" : "";
-                        $result = "<i class='fas fa-bolt $active' id='pulsing-{$row->id}'></i>";
-                        return $result;
-                    })
-                    ->addColumn('img', function($row){
-                        if ($row->created_by_type == 1)
-                        {
-                           $user = User::find($row->created_by);
-                           $src = is_null($user->avatar) ? asset("images/svg/no-photo.svg") : global_asset("../storage/app/public/" . tenant('studio_slug') . "/avatars/" . $user->avatar);
-                        }
-                        else
-                        {
-                            $role = SettingRole::find($row->created_by);
-                            $src = asset("assets/img/avatars/root.png");
-                        }
+                    if ($row->status == 1) {
+                        $taskStatus = "finnishedTask";
+                    }
 
-                        $result = "<div title='".$row->id."' class='c-avatar'><img class='c-avatar-img' src='{$src}'><span class='c-avatar-status bg-success'></span></div>";
-                        return $result;
-                    })
-                    ->addColumn('info_task', function($row){
-                        if ($row->created_by_type == 1)
-                        {
-                           $user = User::find($row->created_by);
-                           if ($user != null)
-                           {
-                               $created_by = ($user->setting_role_id == 14)?  $user->nick : $user->first_name.' '.$user->last_name;
-                               $src = global_asset("../storage/app/public/" . tenant('studio_slug') . "/avatars/{$user->avatar}");
-                           }
-                           else
-                           {
-                               $created_by = "Error";
-                               $src = url("assets/img/avatars/5.jpg");
-                           }
+                    return $createdByUser . ' ' . $taskClass . ' ' . $taskStatus;
+                })
+                ->addColumn('bolt', function ($row) {
+                    $active = ($row->pulsing == 1 && $row->status == 0) ? "pulsing-active" : "";
+                    $result = "<i class='fas fa-bolt $active' id='pulsing-{$row->id}'></i>";
+                    return $result;
+                })
+                ->addColumn('img', function ($row) {
+                    if ($row->created_by_type == 1) {
+                        $user = User::find($row->created_by);
+                        $src = is_null($user->avatar) ? asset("images/svg/no-photo.svg") : global_asset("../storage/app/public/" . tenant('studio_slug') . "/avatars/" . $user->avatar);
+                    } else {
+                        $role = SettingRole::find($row->created_by);
+                        $src = asset("assets/img/avatars/root.png");
+                    }
 
-                        }
-                        else
-                        {
-                            $role = SettingRole::find($row->created_by);
-                            $created_by = $role->name;
+                    $result = "<div title='" . $row->id . "' class='c-avatar'><img class='c-avatar-img' src='{$src}'><span class='c-avatar-status bg-success'></span></div>";
+                    return $result;
+                })
+                ->addColumn('info_task', function ($row) {
+                    if ($row->created_by_type == 1) {
+                        $user = User::find($row->created_by);
+                        if ($user != null) {
+                            $created_by = ($user->setting_role_id == 14) ?  $user->nick : $user->first_name . ' ' . $user->last_name;
+                            $src = global_asset("../storage/app/public/" . tenant('studio_slug') . "/avatars/{$user->avatar}");
+                        } else {
+                            $created_by = "Error";
                             $src = url("assets/img/avatars/5.jpg");
                         }
-                        $date = Carbon::parse($row->created_at, 'UTC');
-                        $created_at = $date->isoFormat('MMMM Do YYYY, h:mm a');
-                        $result = "<div title='$row->id'>{$row->title}</div><div class='small text-muted'><span title='{$row->task_id}'>Publicado por: {$created_by}</span> | {$created_at} | Nr. {$row->code}</div>";
-                        return $result;
-                    })
-                    ->addColumn('info_task_extra', function($row){
-                        if ($row->created_by_type == 1)
-                        {
-                           $user = User::find($row->created_by);
-                           $created_by = ($user->setting_role_id == 14)?  $user->nick : $user->first_name.' '.$user->last_name;
-                           $src = global_asset("../storage/app/public/" . tenant('studio_slug') . "/avatars/{$user->avatar}");
-                        }
-                        else
-                        {
-                            $role = SettingRole::find($row->created_by);
-                            $created_by = $role->name;
-                            $src = url("assets/img/avatars/5.jpg");
-                        }
-                        $date = Carbon::parse($row->created_at, 'UTC');
-                        $created_at = $date->isoFormat('MMMM Do YYYY, h:mm a');
-                        $result = "<div class='small text-muted'><span title='{$row->task_id}'>Publicado por: {$created_by}</span> | {$created_at} | Nr. {$row->code}</div>";
-                        return $result;
-                    })
-                    ->addColumn('time', function($row){
-                        $date = date("Y-m-d H:i:s");
-                        $clock = "1d 22:05:03";
-                        $progress_xc = "100%";
-                        $should_finish_date = "should_finish_date";
-                        if ($row->should_finish < $date)
-                        {
-                            $clock = "Caducado";
-                            $progress_xc = "0%";
-                            $should_finish_date = "should_finish_date_done";
-                        }
-                        $result = "<div class='clearfix'><div style='width: 100px' class='float-left'><small class='text-muted' id='should_finish_time-$row->id'>$clock</small></div></div><div class='progress progress-xs'><div class='' role='progressbar' style='width: $progress_xc' aria-valuenow='100' aria-valuemin='0' aria-valuemax='100' id='should_finish_progress-$row->id'></div><input type='hidden' name='$should_finish_date' id='should_finish_date-$row->id' value='".$row->should_finish."'><input type='hidden' name='created_at_date' id='created_at_date-$row->id' value='".$row->created_at."'></div>";
-                        return $result;
-                    })
-                    ->addColumn('move', function($row){
-                        if ($row->status == 1) {
-                            $user = User::find($row->terminated_by);
-                            if ($user != null)
-                            {
-                                $fullname = $user->first_name." ".$user->last_name;
-                            }
-                            else
-                            {
-                                $fullname = "Error";
-                            }
-
-                            $result = "<div class='text-danger'>Finalizado por: {$fullname}</div><div class='small text-muted'><span>{$row->updated_at}</div>";
-
-                        }
-                        elseif($row->status_user == 1) {
-                            $result = "<span class='text-danger p-2'>Retirado</span>";
-                        }
-                        else
-                        {
-                            $folders = TaskUserFolder::where('user_id', '=', Auth::user()->id)->get();
-                            $items_folder = "<a class='dropdown-item' href='#' onclick='SendToFolder($row->task_status_id,0)'>Pendientes</a>";
-                            foreach ($folders as $folder) {
-                                $folder_id = $folder['id'];
-                                $folder_name = $folder['name'];
-                                $items_folder .= "<a class='dropdown-item' href='#' onclick='SendToFolder($row->task_status_id,$folder_id)'>$folder_name</a>";
-                            }
-                            $result = "<div class='btn-toolbar' role='toolbar'><div class='btn-group'><button class='btn btn-secondary btn-sm dropdown-toggle' type='button' data-toggle='dropdown' aria-haspopup='true' aria-expanded='false'>Archivar</button><div class='dropdown-menu'>$items_folder</div></div></div>";
+                    } else {
+                        $role = SettingRole::find($row->created_by);
+                        $created_by = $role->name;
+                        $src = url("assets/img/avatars/5.jpg");
+                    }
+                    $date = Carbon::parse($row->created_at, 'UTC');
+                    $created_at = $date->isoFormat('MMMM Do YYYY, h:mm a');
+                    $result = "<div title='$row->id'>{$row->title}</div><div class='small text-muted'><span title='{$row->task_id}'>Publicado por: {$created_by}</span> | {$created_at} | Nr. {$row->code}</div>";
+                    return $result;
+                })
+                ->addColumn('info_task_extra', function ($row) {
+                    if ($row->created_by_type == 1) {
+                        $user = User::find($row->created_by);
+                        $created_by = ($user->setting_role_id == 14) ?  $user->nick : $user->first_name . ' ' . $user->last_name;
+                        $src = global_asset("../storage/app/public/" . tenant('studio_slug') . "/avatars/{$user->avatar}");
+                    } else {
+                        $role = SettingRole::find($row->created_by);
+                        $created_by = $role->name;
+                        $src = url("assets/img/avatars/5.jpg");
+                    }
+                    $date = Carbon::parse($row->created_at, 'UTC');
+                    $created_at = $date->isoFormat('MMMM Do YYYY, h:mm a');
+                    $result = "<div class='small text-muted'><span title='{$row->task_id}'>Publicado por: {$created_by}</span> | {$created_at} | Nr. {$row->code}</div>";
+                    return $result;
+                })
+                ->addColumn('time', function ($row) {
+                    $date = date("Y-m-d H:i:s");
+                    $clock = "1d 22:05:03";
+                    $progress_xc = "100%";
+                    $should_finish_date = "should_finish_date";
+                    if ($row->should_finish < $date) {
+                        $clock = "Caducado";
+                        $progress_xc = "0%";
+                        $should_finish_date = "should_finish_date_done";
+                    }
+                    $result = "<div class='clearfix'><div style='width: 100px' class='float-left'><small class='text-muted' id='should_finish_time-$row->id'>$clock</small></div></div><div class='progress progress-xs'><div class='' role='progressbar' style='width: $progress_xc' aria-valuenow='100' aria-valuemin='0' aria-valuemax='100' id='should_finish_progress-$row->id'></div><input type='hidden' name='$should_finish_date' id='should_finish_date-$row->id' value='" . $row->should_finish . "'><input type='hidden' name='created_at_date' id='created_at_date-$row->id' value='" . $row->created_at . "'></div>";
+                    return $result;
+                })
+                ->addColumn('move', function ($row) {
+                    if ($row->status == 1) {
+                        $user = User::find($row->terminated_by);
+                        if ($user != null) {
+                            $fullname = $user->first_name . " " . $user->last_name;
+                        } else {
+                            $fullname = "Error";
                         }
 
-                        return $result;
-                    })
+                        $result = "<div class='text-danger'>Finalizado por: {$fullname}</div><div class='small text-muted'><span>{$row->updated_at}</div>";
+                    } elseif ($row->status_user == 1) {
+                        $result = "<span class='text-danger p-2'>Retirado</span>";
+                    } else {
+                        $folders = TaskUserFolder::where('user_id', '=', Auth::user()->id)->get();
+                        $items_folder = "<a class='dropdown-item' href='#' onclick='SendToFolder($row->task_status_id,0)'>Pendientes</a>";
+                        foreach ($folders as $folder) {
+                            $folder_id = $folder['id'];
+                            $folder_name = $folder['name'];
+                            $items_folder .= "<a class='dropdown-item' href='#' onclick='SendToFolder($row->task_status_id,$folder_id)'>$folder_name</a>";
+                        }
+                        $result = "<div class='btn-toolbar' role='toolbar'><div class='btn-group'><button class='btn btn-secondary btn-sm dropdown-toggle' type='button' data-toggle='dropdown' aria-haspopup='true' aria-expanded='false'>Archivar</button><div class='dropdown-menu'>$items_folder</div></div></div>";
+                    }
 
-                    ->rawColumns(['bolt','img', 'info_task','time','move','info_task_extra', 'DT_RowId','DT_RowClass'])
-                    ->make(true);
+                    return $result;
+                })
+
+                ->rawColumns(['bolt', 'img', 'info_task', 'time', 'move', 'info_task_extra', 'DT_RowId', 'DT_RowClass'])
+                ->make(true);
         }
     }
 
@@ -383,7 +356,7 @@ class TaskController extends Controller
             return utf8_encode($dat);
         } elseif (is_array($dat)) {
             $ret = [];
-            foreach ($dat as $i => $d) $ret[ $i ] = self::convert_from_latin1_to_utf8_recursively($d);
+            foreach ($dat as $i => $d) $ret[$i] = self::convert_from_latin1_to_utf8_recursively($d);
 
             return $ret;
         } elseif (is_object($dat)) {
@@ -405,22 +378,58 @@ class TaskController extends Controller
             <div class='col-lg-10 pr-0 pl-0'>
                 <label style='cursor: pointer'> Administrar Carpetas</label>
             </div>
-        </div>";
+        </div> <hr>
+        ";
         $folders = TaskUserFolder::where('user_id', '=', Auth::user()->id)->get();
         $count = TaskUserStatus::where('user_id', '=', Auth::user()->id)->where('status', '=', 0)->where('folder', '=', 0)->count();
+        $result .=  "
+            <div style='border-color: #4f5d73;'>
+            <div id='highUrgencyFolder' class='col-lg-12 d-flex pr-0 pl-1 taskFolder' 
+                            onclick='displayCustomTask(this.id)' 
+                            style='cursor: pointer;color:brown'>
+                            <div class='col-lg-2 pr-0 pl-0'>
+                                <i class='fas fa-arrow-alt-circle-up'></i>
+                            </div>
+                            <div class='col-lg-10 pr-0 pl-0'>
+                                <label style='cursor: pointer'> Urgentes</label>
+                            </div>
+                            
+                        </div>";
 
+            $result .=  "<div id='midUrgencyFolder' class='col-lg-12 d-flex pr-0 pl-1 taskFolder' 
+                            onclick='displayCustomTask(this.id)' 
+                            style='cursor: pointer;color:darkgoldenrod'>
+                            <div class='col-lg-2 pr-0 pl-0'>
+                                <i class='fas fa-arrow-alt-circle-right'></i>
+                            </div>
+                            <div class='col-lg-10 pr-0 pl-0'>
+                                <label style='cursor: pointer'> Media</label>
+                            </div>
+                        </div>";
+
+            $result .=  "<div id='lowUrgencyFolder' class='col-lg-12 d-flex pr-0 pl-1 taskFolder' 
+                            onclick='displayCustomTask(this.id)' 
+                            style='cursor: pointer;color:darkolivegreen'>
+                            <div class='col-lg-2 pr-0 pl-0'>
+                                <i class='fas fa-arrow-alt-circle-down'></i>
+                            </div>
+                            <div class='col-lg-10 pr-0 pl-0'>
+                                <label style='cursor: pointer'> Baja</label>
+                            </div>
+                        </div>
+                    </div> <hr>
+                    ";
         if ($request->seeing['status'] == 0 && $request->seeing['folder'] == 0)
             $active = 1;
-        $result .= $this->createFolderStructure("Pendientes" , $count , 0, 0, $active);
+        $result .= $this->createFolderStructure("Pendientes", $count, 0, 0, $active);
 
-        foreach ($folders as $folder)
-        {
+        foreach ($folders as $folder) {
             $active = 0;
             if ($request->seeing['status'] == 0 && $request->seeing['folder'] == $folder['id'])
                 $active = 1;
 
             $count = TaskUserStatus::where('user_id', '=', Auth::user()->id)->where('folder', '=', $folder['id'])->count();
-            $result .=$this->createFolderStructure($folder['name'] , $count, 0, $folder['id'], $active);
+            $result .= $this->createFolderStructure($folder['name'], $count, 0, $folder['id'], $active);
         }
 
         $active = 0;
@@ -428,51 +437,19 @@ class TaskController extends Controller
             $active = 1;
 
         $count = TaskUserStatus::where('user_id', '=', Auth::user()->id)->where('status', '=', 1)->count();
-        $result .= $this->createFolderStructure("Finalizados" , 0, 1, 0, $active);
+        $result .= $this->createFolderStructure("Finalizados", 0, 1, 0, $active);
+
+
+
         return $result;
-
-        $result .=  "<div id='highUrgencyFolder' class='col-lg-12 d-flex pr-0 pl-1 taskFolder' 
-                        onclick='displayCustomTask(this.id)' 
-                        style='cursor: pointer;color:brown'>
-                        <div class='col-lg-2 pr-0 pl-0'>
-                            <i class='fas fa-arrow-alt-circle-up'></i>
-                        </div>
-                        <div class='col-lg-10 pr-0 pl-0'>
-                            <label style='cursor: pointer'> Urgentes</label>
-                        </div>
-                        
-                    </div>";
-     
-        $result .=  "<div id='midUrgencyFolder' class='col-lg-12 d-flex pr-0 pl-1 taskFolder' 
-                        onclick='displayCustomTask(this.id)' 
-                        style='cursor: pointer;color:darkgoldenrod'>
-                        <div class='col-lg-2 pr-0 pl-0'>
-                            <i class='fas fa-arrow-alt-circle-right'></i>
-                        </div>
-                        <div class='col-lg-10 pr-0 pl-0'>
-                            <label style='cursor: pointer'> Media</label>
-                        </div>
-                    </div>";
-
-        $result .=  "<div id='lowUrgencyFolder' class='col-lg-12 d-flex pr-0 pl-1 taskFolder' 
-                        onclick='displayCustomTask(this.id)' 
-                        style='cursor: pointer;color:darkolivegreen'>
-                        <div class='col-lg-2 pr-0 pl-0'>
-                            <i class='fas fa-arrow-alt-circle-down'></i>
-                        </div>
-                        <div class='col-lg-10 pr-0 pl-0'>
-                            <label style='cursor: pointer'> Baja</label>
-                        </div>
-                    </div>";
-
     }
 
     public function createFolderStructure($folder_name, $badge, $status, $folder, $active)
     {
-        $icon = ($status == 1) ? "fa fa-trash" : (($status == 0 && $folder == 0)? "fas fa-bolt" : "fa fa-folder");
+        $icon = ($status == 1) ? "fa fa-trash" : (($status == 0 && $folder == 0) ? "fas fa-bolt" : "fa fa-folder");
         $active = ($active == 1) ? "" : "text-muted";
 
-        $badge = ($badge == 0 )? "" : "<span class='badge badge-pill $active badge-secondary' style='position: absolute; top: 4px; right: 2px'>$badge</span>";
+        $badge = ($badge == 0) ? "" : "<span class='badge badge-pill $active badge-secondary' style='position: absolute; top: 4px; right: 2px'>$badge</span>";
         $result = "<div class='col-lg-12 d-flex pr-0 pl-1 $active' onclick='ShowTaskFolder($status,$folder)' style='cursor: pointer'>
             <div class='col-lg-2 pr-0 pl-0'>
                 <i class='$icon'></i>
@@ -518,7 +495,6 @@ class TaskController extends Controller
 
             DB::commit();
             return response()->json(['success' => true]);
-
         } catch (Exception $e) {
             DB::rollback();
             return response()->json(['success' => false]);
@@ -538,7 +514,7 @@ class TaskController extends Controller
             $folder_id = $folder['id'];
             $folder_name = $folder['name'];
             $result .= "<tr id='tr-folder-$folder_id'>";
-            $result .= "<td>".($key + 1)."</td>";
+            $result .= "<td>" . ($key + 1) . "</td>";
             $result .= "<td><input class='form-control' name='edit_folder_name' id='folder-$folder_id' value='$folder_name' onkeyup='updateFolderName($folder_id)'></td>";
             $result .= "<td><button class='btn btn-danger btn-sm' onclick='deleteFolder($folder_id)'><i class='fa fa-trash'></i></button></td>";
             $result .= "</tr>";
@@ -550,14 +526,11 @@ class TaskController extends Controller
     public function titleComment(Request $request)
     {
         $task = Task::where('id', '=', $request->id)->first();
-        if ($task->created_by_type == 1)
-        {
-           $user = User::where('id', '=', $task->created_by)->get();
-           $created_by = ($user[0]->setting_role_id == 14)?  $user[0]->nick : $user[0]->first_name.' '.$user[0]->last_name;
+        if ($task->created_by_type == 1) {
+            $user = User::where('id', '=', $task->created_by)->get();
+            $created_by = ($user[0]->setting_role_id == 14) ?  $user[0]->nick : $user[0]->first_name . ' ' . $user[0]->last_name;
             $src = is_null($user[0]->avatar) ? asset("images/svg/no-photo.svg") : global_asset("../storage/app/public/" . tenant('studio_slug') . "/avatars/" . $user[0]->avatar);
-        }
-        else
-        {
+        } else {
             $role = SettingRole::where('id', '=', $task->created_by)->get();
             $created_by = $role[0]->name;
             $src = url("assets/img/avatars/root.png");
@@ -577,11 +550,11 @@ class TaskController extends Controller
                         <h5 class='text-success'>" . $this->accents($task->title) . "</h5>
                         Publicado por: {$created_by} <span class='small text-muted'> | {$created_at} | Nr. {$task->code}</span> <span class='small text-muted text-muted'>| Finalización: $finish_in</span>
                     </div>";
-        $permission['extend_time'] = (Auth::user()->can('task-time') || Auth::user()->id == $task->created_by)? 1 : 0;
-        $permission['add_receivers'] = (Auth::user()->can('task-receivers-create') || Auth::user()->id == $task->created_by)? 1 : 0;
-        $permission['remove_receivers'] = (Auth::user()->can('task-receivers-delete') )? 1 : 0;
-        $permission['finalized'] = (Auth::user()->can('task-finalized') || Auth::user()->id == $task->created_by )? 1 : 0;
-        return response()->json(['result' => $result , 'permission' => $permission]);
+        $permission['extend_time'] = (Auth::user()->can('task-time') || Auth::user()->id == $task->created_by) ? 1 : 0;
+        $permission['add_receivers'] = (Auth::user()->can('task-receivers-create') || Auth::user()->id == $task->created_by) ? 1 : 0;
+        $permission['remove_receivers'] = (Auth::user()->can('task-receivers-delete')) ? 1 : 0;
+        $permission['finalized'] = (Auth::user()->can('task-finalized') || Auth::user()->id == $task->created_by) ? 1 : 0;
+        return response()->json(['result' => $result, 'permission' => $permission]);
     }
 
     public function receiversComments(Request $request)
@@ -589,15 +562,15 @@ class TaskController extends Controller
         $receivers = "";
         $task_roles = TaskRolesReceivers::where('task_id', '=', $request->id)->get();
         foreach ($task_roles as $key => $task_role) {
-            $receivers .= ($receivers == "")? $task_role->role->name : ", ".$task_role->role->name;
+            $receivers .= ($receivers == "") ? $task_role->role->name : ", " . $task_role->role->name;
         }
 
         $task_users = TaskUsersReceivers::where('task_id', '=', $request->id)->get();
         foreach ($task_users as $key => $task_user) {
-            $full_name = ($task_user->user->setting_role_id == 14)? $task_user->user->nick : $task_user->user->first_name." ".$task_user->user->last_name;
-            $receivers .= ($receivers == "")? $full_name : ", ".$full_name;
+            $full_name = ($task_user->user->setting_role_id == 14) ? $task_user->user->nick : $task_user->user->first_name . " " . $task_user->user->last_name;
+            $receivers .= ($receivers == "") ? $full_name : ", " . $full_name;
         }
-        $receivers = "Recipientes: <span class='text-info'>". $receivers ."</span>";
+        $receivers = "Recipientes: <span class='text-info'>" . $receivers . "</span>";
 
         return $receivers;
     }
@@ -620,26 +593,23 @@ class TaskController extends Controller
         $task_comments = TaskComment::where('task_id', '=', $request->id)->get();
         foreach ($task_comments as $key => $comment) {
 
-            $full_name = ($comment->user->setting_role_id == 14)? $comment->user->nick : $comment->user->first_name." ".$comment->user->last_name;
+            $full_name = ($comment->user->setting_role_id == 14) ? $comment->user->nick : $comment->user->first_name . " " . $comment->user->last_name;
 
             $files = TaskCommentAttachment::where('task_comments_id', $comment->id)->get();
             $content_files = "";
-            foreach ($files as $key => $file)
-            {
+            foreach ($files as $key => $file) {
                 $type = explode(".", $file->file);
                 $type = $type[1];
                 $type = strtolower($type);
 
-                if ($type == "jpg" || $type == "jpeg"  || $type == "png")
-                {
-                    $url = "../../storage/app/public/". tenant('studio_slug') . "/task/$file->file";
-                   $content_files .= "<div class='col-lg-1 border border-info gallery mr-1 bg-dark' style='cursor: zoom-in; border-radius: 3px; padding: 5px; '>
+                if ($type == "jpg" || $type == "jpeg"  || $type == "png") {
+                    $url = "../../storage/app/public/" . tenant('studio_slug') . "/task/$file->file";
+                    $content_files .= "<div class='col-lg-1 border border-info gallery mr-1 bg-dark' style='cursor: zoom-in; border-radius: 3px; padding: 5px; '>
                         <a href='$url'>
-                        <img style=' height: 32px; margin-left:20px; cursor: zoom-in;' src='".asset("images/svg/image.svg")."'>
+                        <img style=' height: 32px; margin-left:20px; cursor: zoom-in;' src='" . asset("images/svg/image.svg") . "'>
                         </a>
                     </div>";
-                }
-                else{
+                } else {
 
                     $svg = "contract.svg";
                     if ($type == "csv" || $type == "xls" || $type == "xlsx")
@@ -649,13 +619,12 @@ class TaskController extends Controller
                     if ($type == "pdf")
                         $svg = "pdf.svg";
 
-                    $doc = '"'.$file->file.'"';
-                    $type = '"'.$type.'"';
+                    $doc = '"' . $file->file . '"';
+                    $type = '"' . $type . '"';
 
                     $content_files .= "<div class='col-lg-1 border border-info mr-1 bg-dark' style='cursor: pointer; border-radius: 3px; padding: 5px; '>
-                        <img onclick='embedDocuments($doc, $type)' style='height: 32px; margin-left:20px;' src='".asset("images/svg/$svg")."'></div>";
+                        <img onclick='embedDocuments($doc, $type)' style='height: 32px; margin-left:20px;' src='" . asset("images/svg/$svg") . "'></div>";
                 }
-
             }
 
             $src = is_null($comment->user->avatar) ? asset("images/svg/no-photo.svg") : global_asset("../storage/app/public/" . tenant('studio_slug') . "/avatars/" . $comment->user->avatar);
@@ -700,26 +669,25 @@ class TaskController extends Controller
     {
         $user = Auth::user();
         $notifications = $user->unreadNotifications->where("type", "App\Notifications\TaskCommentNotification")->all();
-        foreach ($notifications as $notification)
-            {
-                if ($notification->data['task_id'] == $task_id)
-                    {
-                        $notification->markAsRead();
-                    }
-
+        foreach ($notifications as $notification) {
+            if ($notification->data['task_id'] == $task_id) {
+                $notification->markAsRead();
             }
+        }
     }
 
     public function createComments(Request $request)
     {
         $this->folderExists('task');
-        $this->validate($request,
-        [
-            'replaycomment' => 'required',
-        ],
-        [
-            'replaycomment.required' => 'Este campo es obligatorio',
-        ]);
+        $this->validate(
+            $request,
+            [
+                'replaycomment' => 'required',
+            ],
+            [
+                'replaycomment.required' => 'Este campo es obligatorio',
+            ]
+        );
 
         $task = Task::find($request->task_id);
         $task_user_status = TaskUserStatus::where('task_id', $request->task_id)->where('user_id', Auth::user()->id)->get();
@@ -743,10 +711,9 @@ class TaskController extends Controller
                 'pulsing' => 1,
             ]);
 
-            if ($request->file('inputfileComment'))
-            {
+            if ($request->file('inputfileComment')) {
                 $files = $request->file('inputfileComment');
-                foreach($files as $file){
+                foreach ($files as $file) {
                     $task_comment_attachment = new TaskCommentAttachment();
                     $task_comment_attachment->task_comments_id = $task_comment->id;
                     $task_comment_attachment->file = $this->uploadFile($file, 'task');
@@ -759,20 +726,17 @@ class TaskController extends Controller
             //de esta forma yo no recibo el evento
             //broadcast(new NewMessage($message))->toOthers();
 
-           $task = $task_comment->task;
-           $receivers = TaskUserStatus::where('task_id' ,  $request->input('task_id'))->get();
+            $task = $task_comment->task;
+            $receivers = TaskUserStatus::where('task_id',  $request->input('task_id'))->get();
             foreach ($receivers as $receiver) {
                 $user = $receiver->user;
-                if ($user->id != Auth::user()->id)
-                {
+                if ($user->id != Auth::user()->id) {
                     //$user->notify(new TaskCommentNotification($task_comment, $task));
                 }
-
             }
 
             DB::commit();
             return response()->json(['success' => true]);
-
         } catch (Exception $e) {
             DB::rollback();
             return response()->json(['success' => false]);
@@ -785,7 +749,7 @@ class TaskController extends Controller
         $notifications = $request->user()->unreadNotifications->where('type', 'App\Notifications\TaskCommentNotification')->all();
         foreach ($notifications as $notification) {
             $result[] = $notification;
-         }
+        }
         return $result;
     }
 
@@ -803,8 +767,7 @@ class TaskController extends Controller
             DB::beginTransaction();
 
             $task = Task::find($request->task_id);
-            if ($task->created_by_type == 1 && $task->created_by == Auth::user()->id)
-            {
+            if ($task->created_by_type == 1 && $task->created_by == Auth::user()->id) {
                 return response()->json(['success' => false]);
             }
 
@@ -834,7 +797,6 @@ class TaskController extends Controller
 
             DB::commit();
             return response()->json(['success' => true]);
-
         } catch (Exception $e) {
             DB::rollback();
             return response()->json(['success' => false]);
@@ -851,11 +813,9 @@ class TaskController extends Controller
         $roles = SettingRole::orderBy('name', 'ASC')->get();
         $result = [];
         $cont = 0;
-        foreach ($roles as $role)
-        {
+        foreach ($roles as $role) {
             $exists = TaskRolesReceivers::where('task_id', $request->task_id)->where('setting_role_id', $role->id)->exists();
-            if ($exists == false)
-            {
+            if ($exists == false) {
                 $result[$cont]['id'] = $role->id;
                 $result[$cont]['name'] = $role->name;
                 $cont++;
@@ -867,29 +827,25 @@ class TaskController extends Controller
     public function noInUsersReceivers(Request $request)
     {
         if ($request->type == 0) {
-            $users = User::where('setting_role_id', '!=', 14)->where('status', 1)->where('is_admin', 0)->orderBy('first_name' , 'ASC')->get();
-        }
-        else
-        {
-            $users = User::where('setting_role_id', 14)->where('status', 1)->where('is_admin', 0)->orderBy('nick' , 'ASC')->get();
+            $users = User::where('setting_role_id', '!=', 14)->where('status', 1)->where('is_admin', 0)->orderBy('first_name', 'ASC')->get();
+        } else {
+            $users = User::where('setting_role_id', 14)->where('status', 1)->where('is_admin', 0)->orderBy('nick', 'ASC')->get();
         }
 
         $task = Task::find($request->task_id);
 
         $result = [];
         $cont = 0;
-        foreach ($users as $user)
-        {
+        foreach ($users as $user) {
             if ($task->created_by_type == 1 && $task->created_by == $user->id) {
-                     continue;
-                }
+                continue;
+            }
 
             $exists = TaskUsersReceivers::where('task_id', $request->task_id)->where('user_id', $user->id)->exists();
-            if ($exists == false)
-            {
+            if ($exists == false) {
                 $result[$cont]['id'] = $user->id;
                 if ($request->type == 0)
-                    $result[$cont]['fullname'] = $user->first_name.' '.$user->middle_name.' '.$user->last_name.' '.$user->second_last_name;
+                    $result[$cont]['fullname'] = $user->first_name . ' ' . $user->middle_name . ' ' . $user->last_name . ' ' . $user->second_last_name;
                 else
                     $result[$cont]['fullname'] = $user->nick;
 
@@ -911,76 +867,68 @@ class TaskController extends Controller
             DB::beginTransaction();
 
             //add roles to receivers and users to status
-            for ($i=0; $i < count($to_roles) ; $i++) {
+            for ($i = 0; $i < count($to_roles); $i++) {
 
                 $exists = TaskRolesReceivers::where('setting_role_id', '=', $to_roles[$i]->id)->where('task_id', '=', $request->task_id)->exists();
 
-                if ($exists == false)
-                {
+                if ($exists == false) {
                     $task_roles_receivers = new TaskRolesReceivers();
                     $task_roles_receivers->task_id = $request->task_id;
                     $task_roles_receivers->setting_role_id = $to_roles[$i]->id;
                     $task_roles_receivers->save();
 
-                    $comment .= ($comment == "")?  $to_roles[$i]->name : ", ".$to_roles[$i]->name;
+                    $comment .= ($comment == "") ?  $to_roles[$i]->name : ", " . $to_roles[$i]->name;
                 }
 
-                $users = User::where('setting_role_id', '=' , $to_roles[$i]->id)->get();
+                $users = User::where('setting_role_id', '=', $to_roles[$i]->id)->get();
                 foreach ($users as $key => $user) {
                     $exists = TaskUserStatus::where('user_id', '=', $user->id)->where('task_id', '=', $request->task_id)->exists();
-                    if ($exists == false)
-                    {
+                    if ($exists == false) {
                         $task_user_status = new TaskUserStatus();
                         $task_user_status->task_id = $request->task_id;
                         $task_user_status->user_id = $user->id;
                         $task_user_status->save();
                     }
                 }
-
             }
             //add users to receivers and status
-            for ($i=0; $i < count($to_users) ; $i++) {
+            for ($i = 0; $i < count($to_users); $i++) {
                 $exists = TaskUsersReceivers::where('user_id', '=', $to_users[$i]->id)->where('task_id', '=', $request->task_id)->exists();
 
-                if ($exists == false)
-                {
+                if ($exists == false) {
                     $task_users_receivers = new TaskUsersReceivers();
                     $task_users_receivers->task_id = $request->task_id;
                     $task_users_receivers->user_id = $to_users[$i]->id;
                     $task_users_receivers->save();
 
-                    $comment .= ($comment == "")?  $to_users[$i]->name : ", ".$to_users[$i]->name;
+                    $comment .= ($comment == "") ?  $to_users[$i]->name : ", " . $to_users[$i]->name;
                 }
 
                 $exists = TaskUserStatus::where('user_id', '=', $to_users[$i]->id)->where('task_id', '=', $request->task_id)->exists();
 
-                if ($exists == false)
-                {
+                if ($exists == false) {
                     $task_users_status = new TaskUserStatus();
                     $task_users_status->task_id = $request->task_id;
                     $task_users_status->user_id = $to_users[$i]->id;
                     $task_users_status->save();
                 }
-
             }
 
             //add models to receivers and status
-            for ($i=0; $i < count($to_models) ; $i++) {
+            for ($i = 0; $i < count($to_models); $i++) {
                 $exists = TaskUsersReceivers::where('user_id', '=', $to_models[$i]->id)->where('task_id', '=', $request->task_id)->exists();
 
-                if ($exists == false)
-                {
+                if ($exists == false) {
                     $task_users_receivers = new TaskUsersReceivers();
                     $task_users_receivers->task_id = $request->task_id;
                     $task_users_receivers->user_id = $to_models[$i]->id;
                     $task_users_receivers->save();
 
-                    $comment .= ($comment == "")?  $to_models[$i]->name : ", ".$to_models[$i]->name;
+                    $comment .= ($comment == "") ?  $to_models[$i]->name : ", " . $to_models[$i]->name;
                 }
 
                 $exists = TaskUserStatus::where('user_id', '=', $to_models[$i]->id)->where('task_id', '=', $request->task_id)->exists();
-                if ($exists == false)
-                {
+                if ($exists == false) {
                     $task_user_status = new TaskUserStatus();
                     $task_user_status->task_id = $request->task_id;
                     $task_user_status->user_id = $to_models[$i]->id;
@@ -992,13 +940,12 @@ class TaskController extends Controller
                 $task_comment = new TaskComment();
                 $task_comment->task_id = $request->task_id;
                 $task_comment->user_id = Auth::user()->id;
-                $task_comment->comment = "Recipiente agregado: <span class='text-success'>".$comment."</span>";
+                $task_comment->comment = "Recipiente agregado: <span class='text-success'>" . $comment . "</span>";
                 $task_comment->save();
             }
 
             DB::commit();
             return response()->json(['success' => true]);
-
         } catch (Exception $e) {
             DB::rollback();
             return response()->json(['success' => false]);
@@ -1022,7 +969,7 @@ class TaskController extends Controller
         $task_users = TaskUsersReceivers::where('task_id', '=', $request->task_id)->get();
         foreach ($task_users as $key => $task_user) {
 
-            $full_name = ($task_user->user->setting_role_id == 14)? $task_user->user->nick : $task_user->user->first_name." ".$task_user->user->last_name;
+            $full_name = ($task_user->user->setting_role_id == 14) ? $task_user->user->nick : $task_user->user->first_name . " " . $task_user->user->last_name;
             $to_users[$cont]['id'] = $task_user->user_id;
             $to_users[$cont]['name'] = $full_name;
             $cont++;
@@ -1044,28 +991,27 @@ class TaskController extends Controller
             DB::beginTransaction();
 
             //remove roles to receivers and users to status
-            for ($i=0; $i < count($to_roles) ; $i++) {
+            for ($i = 0; $i < count($to_roles); $i++) {
 
-                $comment .= ($comment == "")?  $to_roles[$i]->name : ", ".$to_roles[$i]->name;
+                $comment .= ($comment == "") ?  $to_roles[$i]->name : ", " . $to_roles[$i]->name;
 
                 $task_roles_receivers = TaskRolesReceivers::where('setting_role_id', '=', $to_roles[$i]->id)->where('task_id', '=', $request->task_id)->get();
 
                 $task_roles_receivers = TaskRolesReceivers::find($task_roles_receivers[0]->id);
                 $task_roles_receivers->delete();
 
-                $users = User::where('setting_role_id', '=' , $to_roles[$i]->id)->get();
+                $users = User::where('setting_role_id', '=', $to_roles[$i]->id)->get();
                 foreach ($users as $key => $user) {
                     $task_user_status = TaskUserStatus::where('user_id', '=', $user->id)->where('task_id', '=', $request->task_id)->get();
                     $task_user_status = TaskUserStatus::find($task_user_status[0]->id);
                     $task_user_status->delete();
                 }
-
             }
 
             //remove users to receivers and status
-            for ($i=0; $i < count($to_users) ; $i++) {
+            for ($i = 0; $i < count($to_users); $i++) {
 
-                $comment .= ($comment == "")?  $to_users[$i]->name : ", ".$to_users[$i]->name;
+                $comment .= ($comment == "") ?  $to_users[$i]->name : ", " . $to_users[$i]->name;
 
                 $this->removeUsersReceivers($request->task_id, $to_users[$i]->id);
 
@@ -1077,12 +1023,11 @@ class TaskController extends Controller
             $task_comment = new TaskComment();
             $task_comment->task_id = $request->task_id;
             $task_comment->user_id = Auth::user()->id;
-            $task_comment->comment = "Recipiente eliminado: <span class='text-danger'>".$comment."</span>";
+            $task_comment->comment = "Recipiente eliminado: <span class='text-danger'>" . $comment . "</span>";
             $task_comment->save();
 
             DB::commit();
             return response()->json(['success' => true]);
-
         } catch (Exception $e) {
             DB::rollback();
             return response()->json(['success' => false]);
@@ -1096,34 +1041,31 @@ class TaskController extends Controller
             $radio_time = $request->time_aprox_extend;
             if ($radio_time == 'option-hours_extend') {
                 $time = $request->input('select_hours_extend');
-                $time = "+".$time." hours";
-            }
-            else
-            {
+                $time = "+" . $time . " hours";
+            } else {
                 $time = $request->input('select_days_extend');
-                $time = "+".$time." day";
+                $time = "+" . $time . " day";
             }
 
             $task = Task::find($request->task_id);
             $should_finish = $task->should_finish;
 
-            $should_finish = strtotime($time , strtotime($should_finish));
-            $should_finish = date('Y-m-d H:i:s' , $should_finish);
+            $should_finish = strtotime($time, strtotime($should_finish));
+            $should_finish = date('Y-m-d H:i:s', $should_finish);
 
             $task->should_finish = $should_finish;
             $task->save();
 
-            $comment = ($radio_time == 'option-hours_extend')? (($request->select_hours_extend == 1)? $request->select_hours_extend." hora" : $request->select_hours_extend." horas" ) : (($request->select_days_extend == 1)? $request->select_days_extend." dia" : $request->select_days_extend." dias" );
+            $comment = ($radio_time == 'option-hours_extend') ? (($request->select_hours_extend == 1) ? $request->select_hours_extend . " hora" : $request->select_hours_extend . " horas") : (($request->select_days_extend == 1) ? $request->select_days_extend . " dia" : $request->select_days_extend . " dias");
 
             $task_comment = new TaskComment();
             $task_comment->task_id = $request->task_id;
             $task_comment->user_id = Auth::user()->id;
-            $task_comment->comment = "Se ha alargado el tiempo en : <span class='text-info'>".$comment."</span>";
+            $task_comment->comment = "Se ha alargado el tiempo en : <span class='text-info'>" . $comment . "</span>";
             $task_comment->save();
 
             DB::commit();
             return response()->json(['success' => true]);
-
         } catch (Exception $e) {
             DB::rollback();
             return response()->json(['success' => false]);
@@ -1148,14 +1090,14 @@ class TaskController extends Controller
 
             DB::commit();
             return response()->json(['success' => true]);
-
         } catch (Exception $e) {
             DB::rollback();
             return response()->json(['success' => false]);
         }
     }
 
-    function clean($string) {
+    function clean($string)
+    {
         $not_allowed = [
             "ðŸ˜„",
             "ðŸ˜ƒ",
@@ -2362,27 +2304,23 @@ class TaskController extends Controller
 
             $tasks = DB::connection('gbmedia')->table('trabajo')->whereBetween('id', [$min_id, $max_id])->get();
 
-            if (!Schema::hasColumn('tasks', 'old_task_id'))
-            {
+            if (!Schema::hasColumn('tasks', 'old_task_id')) {
                 Schema::table('tasks', function (Blueprint $table) {
                     $table->string('old_task_id')->nullable();
                 });
             }
 
             //dd($tasks);
-            foreach ($tasks AS $task) {
+            foreach ($tasks as $task) {
                 $created_by_type = $task->fk_u_id_c != 0 ? 1 : 2;
                 $created_by_id = $created_by_type == 1 ? $task->fk_u_id_c : $task->t_rol_crea;
 
-                if($created_by_type == 2)
-                {
+                if ($created_by_type == 2) {
                     $created_by_id = $GB_tasks_roles[$task->t_rol_crea];
-                }
-                else
-                {
+                } else {
                     $creator = User::select('id')->where('old_user_id', $task->fk_u_id_c)->first();
 
-                    if(!is_null($creator)) {
+                    if (!is_null($creator)) {
                         $created_by_id = $creator->id;
                     } else {
                         $created_by_id = 594;
@@ -2425,8 +2363,7 @@ class TaskController extends Controller
 
                 $created_task->save();
 
-                if (!Schema::hasColumn('task_comments', 'old_comment_id'))
-                {
+                if (!Schema::hasColumn('task_comments', 'old_comment_id')) {
                     Schema::table('task_comments', function (Blueprint $table) {
                         $table->string('old_comment_id')->nullable();
                     });
@@ -2454,7 +2391,7 @@ class TaskController extends Controller
                 $ok_first_comment = $first_comment->save();
 
                 if ($ok_first_comment) {
-                    if(!is_null($task->archivo) && !empty($task->archivo)) {
+                    if (!is_null($task->archivo) && !empty($task->archivo)) {
                         $file = $task->archivo;
 
                         $task_comment_file =  TaskCommentAttachment::firstOrCreate(
@@ -2475,8 +2412,8 @@ class TaskController extends Controller
 
                     $gb_tasks_files = DB::connection('gbmedia')->table('trabajo_archivos')->where('trabajo_id', $created_task->old_task_id)->get();
 
-                    if($gb_tasks_files->count() > 0) {
-                        foreach ($gb_tasks_files AS $gb_task_file) {
+                    if ($gb_tasks_files->count() > 0) {
+                        foreach ($gb_tasks_files as $gb_task_file) {
                             $task_comment_file = TaskCommentAttachment::firstOrCreate(
                                 [
                                     'task_comments_id' => $first_comment->id,
@@ -2499,7 +2436,7 @@ class TaskController extends Controller
                 // tasks_attachments
                 $tasks_attachments = DB::connection('gbmedia')->table('trabajo_comentario_archivos')->where('trabajo_id', $task->id)->get();
 
-                foreach ($tasks_attachments AS $task_attachment) {
+                foreach ($tasks_attachments as $task_attachment) {
                     $new_comment = TaskComment::select('id')->where('old_comment_id', $task_attachment->comentario_id)->first();
                     if (!is_object($new_comment)) {
                         continue;
@@ -2541,11 +2478,10 @@ class TaskController extends Controller
 
             $tasks = Task::whereBetween('old_task_id', [$min_id, $max_id])->where('status', 0)->get();
 
-            foreach ($tasks AS $task) {
+            foreach ($tasks as $task) {
                 $tasks_users = DB::connection('gbmedia')->table('trabajo_usuario_estado')->where('id_trabajo', $task->old_task_id)->get();
 
-                foreach ($tasks_users AS $task_user)
-                {
+                foreach ($tasks_users as $task_user) {
                     $user = User::select('id')->where('old_user_id', $task_user->fk_u_id)->first();
 
                     if (!is_object($user)) {
@@ -2613,17 +2549,16 @@ class TaskController extends Controller
 
             $tasks_comments = DB::connection('gbmedia')->table('trabajo_comentarios')->whereBetween('id_trabajo', [$min_id, $max_id])->get();
 
-            if (!Schema::hasColumn('task_comments', 'old_comment_id'))
-            {
+            if (!Schema::hasColumn('task_comments', 'old_comment_id')) {
                 Schema::table('task_comments', function (Blueprint $table) {
                     $table->string('old_comment_id')->nullable();
                 });
             }
 
-            foreach ($tasks_comments AS $task_comment) {
+            foreach ($tasks_comments as $task_comment) {
                 $task = Task::select('id')->where('old_task_id', $task_comment->id_trabajo)->first();
 
-                if(!is_object($task)) {
+                if (!is_object($task)) {
                     continue;
                 }
 
@@ -2674,18 +2609,22 @@ class TaskController extends Controller
             $task_comments = TaskComment::whereBetween('task_id', [$min_id, $max_id])->get();
             //dd($task_comments);
 
-            foreach ($task_comments AS $task_comment) {
+            foreach ($task_comments as $task_comment) {
                 $old_task = Task::where('id', $task_comment->task_id)->first();
 
-                if(!is_object($old_task)) { continue; }
+                if (!is_object($old_task)) {
+                    continue;
+                }
 
                 $gb_tasks_files = DB::connection('gbmedia')->table('trabajo_archivos')->where('trabajo_id', $old_task->old_task_id)->get();
 
-                if($gb_tasks_files->count() == 0) { continue; }
+                if ($gb_tasks_files->count() == 0) {
+                    continue;
+                }
 
                 $first_comment = TaskComment::where('task_id', $old_task->id)->first();
 
-                foreach ($gb_tasks_files AS $gb_task_file) {
+                foreach ($gb_tasks_files as $gb_task_file) {
                     $task_comment_file = TaskCommentAttachment::firstOrCreate(
                         [
                             'task_comments_id' => $first_comment->id,
@@ -2722,7 +2661,7 @@ class TaskController extends Controller
 
             $tasks = DB::connection('gbmedia')->table('trabajo')->whereBetween('id', [$min_id, $max_id])->get();
 
-            foreach ($tasks AS $task) {
+            foreach ($tasks as $task) {
                 $status = $task->estado == 'finalizado' ? 1 : 0;
 
                 $task_status = Task::firstOrCreate(

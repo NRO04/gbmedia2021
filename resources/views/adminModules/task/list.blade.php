@@ -1,6 +1,7 @@
 @extends('layouts.app')
 @section('pageTitle', 'Trabajos')
 @section('content')
+
 <div class="row">
 	<div class="col-lg-12">
 		<div class="card">
@@ -236,8 +237,8 @@
                 title="Alargar Tiempo"><i
                 class="far fa-clock"></i></button>
 
-        <button id="remove-receivers" class="btn btn-m btn-dark float-right btn-sm mr-2" data-toggle="modal" data-target="#modal-receivers_remove"
-                id="remove_receivers"
+        <button id="remove_receivers" class="btn btn-m btn-dark float-right btn-sm mr-2" data-toggle="modal" data-target="#modal-receivers_remove"
+                
                  title="Eliminar Recipiente"><i class="fas fa-user-minus"></i></button>
 
         <button id="add-receivers" class="btn btn-m btn-dark float-right btn-sm mr-2" data-toggle="modal" data-target="#modal-receivers_add" id="add-receivers"
@@ -802,6 +803,7 @@ $("#btn-create-folder").on("click" , function(){
     });
 });
 
+
 function displayCustomTask(folderId){
 	
 	$("#task-table_info").css("display","none");
@@ -1032,9 +1034,9 @@ function titleComment(id)
         }
 
         if(res.permission.remove_receivers == 0) {
-            $("#remove-receivers").css('display', 'none');
+            $("#remove_receivers").css('display', 'none');
         } else {
-            $("#remove-receivers").css('display', 'block');
+            $("#remove_receivers").css('display', 'block');
         }
 
         if(res.permission.add_receivers == 0) {
@@ -1206,6 +1208,8 @@ $("#btn-replaycomment").on("click" , function(){
 	                icon: "success",
 	                title: "El comentario fue creado exitosamente",
 	            });
+	            
+	            $("#form-create-comment")[0].reset();
 
                 tinyMCE.activeEditor.setContent('');
                 contentComments($("#task_id").val());
