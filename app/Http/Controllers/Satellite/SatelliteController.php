@@ -2509,8 +2509,14 @@ class SatelliteController extends Controller
 
             }
 
-            $recordsTotal = $query->get()->count();
-            $query = $query->skip($request->start)->take($request->start + $request->length)->get();
+            /** 
+             * 
+             * Se utiliza al final
+             * 
+             *  **/
+
+            //$recordsTotal = $query->get()->count();
+            //$query = $query->skip($request->start)->take($request->start + $request->length)->get();
         }
         else
         {
@@ -2543,11 +2549,42 @@ class SatelliteController extends Controller
                 $query = $query->where('sa.page_id', $request->page_select)->where('sa.status_id', $request->status);
             }
 
-            $recordsTotal = $query->get()->count();
-            $query = $query->skip($request->start)->take($request->start + $request->length)->get();
+            /** 
+             * 
+             * Se utiliza al final
+             * 
+             *  **/
+
+            //$recordsTotal = $query->get()->count();
+            //$query = $query->skip($request->start)->take($request->start + $request->length)->get();
         }
 
+        // Arreglo para saber el nombre de la columna por su numero
+        $nameColumns[0]="owner";
+        $nameColumns[1]="nick";
+        $nameColumns[2]="first_name";
+        $nameColumns[3]="access";
+        $nameColumns[5]="updated_at";
 
+        // Ordenar lista de cuentas segun la columna y dirección
+        if($request->order[0]['column'] == '5') {
+            // Cambiar el orden de la fecha ya que las ordena al reves
+            if($request->order[0]['dir'] == 'asc') {
+                $query = $query->orderBy('updated_at', 'DESC');
+            } else {
+                $query = $query->orderBy('updated_at', 'ASC');
+            }
+        } else {
+            $query = $query
+                ->orderBy($nameColumns[$request->order[0]['column']], $request->order[0]['dir']);
+        }
+        
+        // Paginación
+        $recordsTotal = $query->get()->count();
+        $query = $query
+            ->skip($request->start)
+            ->take($request->start + $request->length)
+            ->get();
 
         $result[0]['owner'] = "";
         $result[0]['nick'] = "";
