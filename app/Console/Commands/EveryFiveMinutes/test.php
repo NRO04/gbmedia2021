@@ -79,7 +79,7 @@ class test extends Command
 
         $value = $browser->waitFor('.earnings', 2)->text('.earnings'); //Espera y obtiene el texto que esta dentro de la clase.
         $value = explode('$', $value); //Transforma el texto a un array.
-        $this->info("Value " . $value[1]);
+        $this->info("Value " . $value[1]); // Muestra el valor obtenido de earnings.
 
 
 

@@ -476,7 +476,7 @@ Route::group(['prefix' => 'user', 'as' => 'user.', 'middleware' => ['auth']], fu
     Route::get('/getModels/{id}', 'Users\UserController@getModels')->name('getModels');
     Route::get('/getPhotographers/{id}', 'Users\UserController@getPhotographers')->name('getPhotographers');
     Route::get('/getFilmakers/{id}', 'Users\UserController@getFilmakers')->name('getFilmakers');
-    Route::get('edit/{user_id}', 'Users\UserController@edit')->name('edit');
+    Route::get('edit/{user_id}', 'Users\@UserControlleredit')->name('edit');
     Route::get('/getInactives', 'Users\UserController@getInactives')->name('get_inactives');
 
     Route::get('/getDepartmentCities', 'Users\UserController@getDepartmentCities')->name('get_department_cities');

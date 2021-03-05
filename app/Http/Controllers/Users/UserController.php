@@ -1592,7 +1592,9 @@ class UserController extends Controller
             $user->pants_long = (isset($request->pants_long) && $request->pants_long != 'null' ? $request->pants_long : null);
 
             $roles = $user->getRoleNames();
-
+            
+            // print_r($roles);
+        
             foreach ($roles AS $role) {
                 $setting_role = SettingRole::where('name', $role)->first();
 

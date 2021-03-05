@@ -5317,7 +5317,7 @@ EOD;
                 $emails = explode(',', $owner_stats_emails);
                 array_push($emails, $owner_email);
 
-                $accounts_send[0] = [];
+                $accounts_send = [];
                 $payroll_accounts = SatellitePaymentAccount::where('payroll_id', $payroll->id)->get();
 
                 foreach ($payroll_accounts as $key => $payroll_account)
@@ -5329,7 +5329,7 @@ EOD;
                     $accounts_send[$key]["description"] = $payroll_account->description;
                 }
 
-                $commission_send[0] = [];
+                $commission_send = [];
                 $commissions = SatellitePaymentCommission::where('payroll_id', $payroll->id)->get();
                 foreach ($commissions as $key => $commission)
                 {
@@ -5338,7 +5338,7 @@ EOD;
                     $commission_send[$key]["description"] = $commission->description;
                 }
 
-                $deduction_send[0] = [];
+                $deduction_send = [];
                 $deductions = SatellitePaymentDeduction::where([
                     ['owner_id', $payroll->owner_id],
                     ['payment_date', null]

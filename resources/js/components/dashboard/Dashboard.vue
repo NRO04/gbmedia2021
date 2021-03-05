@@ -1,12 +1,12 @@
 <template>
     <div id="container-dashboard">
-        <div class="row" v-if="can('home-statistics') || user.setting_role_id === 11">
-            <div class="col-12">
+        <div class="row" v-if="can('home-statistics') || user.setting_role_id === 11 || user.setting_role_id === 1">
+            <!-- <div class="col-12">
+                <statistics-graph></statistics-graph>
+            </div> -->
+           <div class="col-12">
                 <statistics-resume :user="user"></statistics-resume>
             </div>
-<!--            <div class="col-12">
-                <statistics-graph></statistics-graph>
-            </div>-->
         </div>
         <div class="row">
             <div class="col-12 col-sm-6">
@@ -33,6 +33,8 @@
         ],
         methods: {
             can(permission_name) {
+
+                console.log(this.permissions);
                 return this.permissions.indexOf(permission_name) !== -1;
             },
         }
