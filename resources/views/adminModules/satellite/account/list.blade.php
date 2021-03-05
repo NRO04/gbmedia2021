@@ -411,7 +411,7 @@
             Mytable = $("#acounts-table").DataTable({
                 processing: true,
                 serverSide: true,
-                ordering: false,
+                ordering: true, //Se habilita la ordenación
                 "lengthMenu": [[50, 100, 300, 400], [50, 100, 300, 400]],
                 "language": {
                     url: '{{ asset('DataTables/Spanish.json') }}',
@@ -432,13 +432,12 @@
                     {data: "nick"},
                     {data: "name"},
                     {data: "access"},
-                    {data: "partner"},
+                    {data: "partner", orderable: false}, // no es nesesario ordenar,
                     {data: "modified"},
-                    {data: "status"},
-                    {data: "actions"},
-
+                    {data: "status", orderable: false}, // no es nesesario ordenar
+                    {data: "actions", orderable: false}, // no es nesesario ordenar
                 ],
-                columnDefs: [{targets: [0], orderable: false,}],
+                //columnDefs: [{targets: [0], orderable: true,}], no es nesesario
                 fnDrawCallback: function () {
                     $('[data-toggle="tooltip"]').tooltip();
                 }
