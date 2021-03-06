@@ -692,11 +692,11 @@ function ShowTable()
         processing: true,
         ordering : false,
         serverSide: true,
-        bLengthChange: false,
+        // bLengthChange: false,
         "language": {
                     url: '{{ asset('DataTables/Spanish.json') }}',
                 },
-        "lengthMenu": [[100, 200, 300, 400], [100, 200, 300, 400]],
+        "lengthMenu": [[10, 20, 30, 40], [10, 20, 30, 40]],
 
         ajax: {
             url: "{{ route('tasks.get_tasks')}}",

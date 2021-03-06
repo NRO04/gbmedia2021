@@ -2652,7 +2652,7 @@ class SatelliteController extends Controller
                 'recordsTotal' => $recordsTotal,
                 'recordsFiltered' => $recordsTotal,
                 'data' => $result,
-            ])
+            ]) 
             ->make(true);
     }
 
