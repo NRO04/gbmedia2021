@@ -5343,22 +5343,35 @@ EOD;
         $payrolls = SatellitePaymentPayroll::where('payment_date', $request->payment_date)->where('is_user', $request->is_user)
             ->orderBy('payment_methods_id', 'asc')->get();
 
-        foreach ($payrolls as $payroll)
-        {
+        foreach ($payrolls as $payroll) {
             $owner = SatelliteOwner::find($payroll->owner_id);
-            if($owner == null){
+            if ($owner == null) {
                 continue;
-            }else{
-                $owner_email = $owner->email;
-                $owner_stats_emails = $owner->statistics_emails;
-                $emails = explode(',', $owner_stats_emails);
-                array_push($emails, $owner_email);
+            } else {
+
+                //echo $owner->owner.' ';
+                //print_r($payroll);
+                $emails = [];
+                
+                $statistics_emails = explode(',', $owner->statistics_emails);
+                (empty($owner->statistics_emails)) ?  array_push($emails, $owner->email) : $emails = $statistics_emails;
+                // $owner_email = (empty($owner->statistics_emails)) ? $owner->email : $owner->statistics_emails;
+                // print_r($emails);
+
+                // print_r($emails);
+
+                //break;
+                // $owner_stats_emails = $owner->statistics_emails;
+                // $emails = explode(',', $owner_stats_emails);
+                // array_push($emails, $owner_email);
+
+
+
 
                 $accounts_send = [];
                 $payroll_accounts = SatellitePaymentAccount::where('payroll_id', $payroll->id)->get();
 
-                foreach ($payroll_accounts as $key => $payroll_account)
-                {
+                foreach ($payroll_accounts as $key => $payroll_account) {
                     $accounts_send[$key]["payment_date"] = $payroll_account->payment_date;
                     $accounts_send[$key]["page"] = $payroll_account->page->name;
                     $accounts_send[$key]["nick"] = $payroll_account->nick;
@@ -5368,10 +5381,9 @@ EOD;
 
                 $commission_send = [];
                 $commissions = SatellitePaymentCommission::where('payroll_id', $payroll->id)->get();
-                foreach ($commissions as $key => $commission)
-                {
+                foreach ($commissions as $key => $commission) {
                     $commission_send[$key]["amount"] = $commission->amount;
-                    $commission_send[$key]["assign_to"] = ($commission->assign_to == 2)? "Pesos" : "Dolares";
+                    $commission_send[$key]["assign_to"] = ($commission->assign_to == 2) ? "Pesos" : "Dolares";
                     $commission_send[$key]["description"] = $commission->description;
                 }
 
@@ -5381,31 +5393,29 @@ EOD;
                     ['payment_date', null]
                 ])->orWhere([
                     ['owner_id', $payroll->owner_id],
-                    ['payment_date', '<=' , $request->payment_date],
-                    ['finished_date', '>=' , $request->payment_date],
+                    ['payment_date', '<=', $request->payment_date],
+                    ['finished_date', '>=', $request->payment_date],
                     ['status', 1],
                 ])->orWhere([
                     ['owner_id', $payroll->owner_id],
-                    ['payment_date', '<=' , $request->payment_date],
-                    ['finished_date', null ],
+                    ['payment_date', '<=', $request->payment_date],
+                    ['finished_date', null],
                     ['status', 0],
                 ])->get();
-                foreach ($deductions as $key => $deduction)
-                {
-                    $deduction_send[$key]["created_at"] = date_format(date_create($deduction->created_at),"d M Y");
+                foreach ($deductions as $key => $deduction) {
+                    $deduction_send[$key]["created_at"] = date_format(date_create($deduction->created_at), "d M Y");
                     $deduction_send[$key]["total"] = $deduction->total;
                     $deduction_send[$key]["times_paid"] = $deduction->times_paid;
-                    $deduction_send[$key]["deduction_to"] = ($deduction->deduction_to == 2)? "Pesos" : "Dolares";
+                    $deduction_send[$key]["deduction_to"] = ($deduction->deduction_to == 2) ? "Pesos" : "Dolares";
                     $deduction_send[$key]["amount"] = $deduction->amount;
                     $deduction_send[$key]["description"] = $deduction->description;
                     $deduction_send[$key]["paydeduction"] = "";
                     $paydeductions = SatellitePaymentPayDeduction::where('deduction_id', $deduction->id)->get();
-                    foreach ($paydeductions as $paydeduction)
-                    {
+                    foreach ($paydeductions as $paydeduction) {
                         if ($deduction_send[$key]["paydeduction"] == "")
-                            $deduction_send[$key]["paydeduction"] = date_format(date_create($paydeduction->payment_date),"d M Y")." ($".$paydeduction->amount.")";
+                            $deduction_send[$key]["paydeduction"] = date_format(date_create($paydeduction->payment_date), "d M Y") . " ($" . $paydeduction->amount . ")";
                         else
-                            $deduction_send[$key]["paydeduction"] = ", ".date_format(date_create($paydeduction->payment_date),"d M Y")." ($".$paydeduction->amount.")";
+                            $deduction_send[$key]["paydeduction"] = ", " . date_format(date_create($paydeduction->payment_date), "d M Y") . " ($" . $paydeduction->amount . ")";
                     }
                 }
 
@@ -5424,27 +5434,50 @@ EOD;
                 $excel['commissions'] = $commission_send;
                 $excel['deductions'] = $deduction_send;
 
-                $path = "statistics/".$payroll->owner_id;
+                $path = "statistics/" . $payroll->owner_id;
                 if (!file_exists($path)) {
                     Storage::disk('local')->makeDirectory($path);
                 }
-                Excel::store(new PayrollStatistic($excel), $path.'/Pago.xlsx');
+                Excel::store(new PayrollStatistic($excel), $path . '/Pago.xlsx');
+
+                //foreach ($emails as $email){
+
+                   // if (!empty($email)){
+                        //Mail::to(trim($email))->send(new OwnerStatistics2($payroll->owner_id));
+
+                        //print_r($email);
+                      //  echo  $payroll->owner_id." ".$email."\n";
+
+                       //Mail::to('romangbmediagroup@gmail.com')->send(new OwnerStatistics2($payroll->owner_id));
+                       //echo $email." sent \n";
+                   // }
+             //   }        
+             
+             
+                 $emailRegex = "/^([a-z0-9\+_\-]+)(\.[a-z0-9\+_\-]+)*@([a-z0-9\-]+\.)+[a-z]{2,6}$/ix"; //Expersion regular para validar si un texto contiene un email.
 
                 foreach ($emails as $email){
-                    if (!empty($email)){
+                    
+                    $validateEmail = preg_match($emailRegex, $email); //Valida el email con la expresion regular. Retorna true or false segun el caso.
+
+                    if (!empty($email) && $validateEmail){
                         Mail::to(trim($email))->send(new OwnerStatistics2($payroll->owner_id));
-                        //Mail::to('romangbmediagroup@gmail.com')->send(new OwnerStatistics2($payroll->owner_id));
+
+                        // print_r($email);
+                        // echo $email. "\n ";
+                       //Mail::to('developmentteamgbmediagroup@gmail.com')->send(new OwnerStatistics2($payroll->owner_id));
+                       //echo $email." sent \n";
                     }
-                }
+                }  
                 //Mail::to('romangbmediagroup@gmail.com')->send(new OwnerStatistics2($request->owner_id));
 
                 $payroll->update([
                     'mail_send' => 1
                 ]);
 
-                $unlink_path = "app/".$path."/Pago.xlsx";
+                $unlink_path = "app/" . $path . "/Pago.xlsx";
                 unlink(storage_path($unlink_path));
-            }//end else
+            } //end else
         }
 
         return response()->json(['success' => true]);

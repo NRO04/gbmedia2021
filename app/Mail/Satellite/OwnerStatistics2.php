@@ -7,6 +7,7 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
+use App\Models\Satellite\SatelliteOwner;
 
 class OwnerStatistics2 extends Mailable
 {
@@ -39,8 +40,11 @@ class OwnerStatistics2 extends Mailable
      * @return $this
      */
     public function build()
-    {
+    {   
+        $ow = SatelliteOwner::where('id', '=', $this->id)->first();
+        
+    
         $path = 'app/statistics/'.$this->id;
-        return $this->markdown('emails.satellite.statistics')->subject('Estadisticas')->attach(storage_path($path.'/Pago.xlsx'));
+        return $this->markdown('emails.satellite.statistics')->subject('Estadisticas '.$this->id.' '.$ow->owner)->attach(storage_path($path.'/Pago.xlsx'));
     }
 }
