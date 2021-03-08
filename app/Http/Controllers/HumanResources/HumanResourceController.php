@@ -2548,7 +2548,8 @@ class HumanResourceController extends Controller
                         );
                 }
             }
-
+            
+            $alarm = RHAlarm::query()->update(['rha_interviews' => 1]);
             DB::commit();
 
             return response()->json(['success' => $success, 'id' => $model->id]);
@@ -2790,6 +2791,8 @@ class HumanResourceController extends Controller
                 'created_at' => Carbon::parse($model->created_at)->format('d/m/Y'),
             ];
         }
+
+        $alarm = RHAlarm::where('user_id', Auth::user()->id)->update(['rha_interviews' => 0]);
 
         return response()->json($data);
     }

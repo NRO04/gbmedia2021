@@ -16,7 +16,7 @@
                                 <b-form-select-option :value="3">Modelos Referidos</b-form-select-option>
                             </b-form-select>
                         </div>
-                        <div class="col-xs-12 col-sm-4 text-sm-right" @click="" v-if="can('human-resources-referred-prospect-create')">
+                        <div class="col-xs-12 col-sm-4 text-sm-right" v-if="can('human-resources-referred-prospect-create')">
                             <a class="btn btn-success btn-sm" v-b-modal.modal-create>
                                 <i class="fa fa-plus"></i> Crear
                             </a>
@@ -387,7 +387,10 @@
                     }
                 }
 
-                let headers = {'Content-Type': "multipart/form-data;"};
+                let headers = {
+                    'Content-Type': "multipart/form-data;",
+                    "X-CSRF-TOKEN": document.head.querySelector("[name=csrf-token]").content
+                    };
 
                 helper.VUE_DisableModalActionButtons();
 
