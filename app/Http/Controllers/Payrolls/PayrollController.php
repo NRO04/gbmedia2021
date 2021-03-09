@@ -357,7 +357,7 @@ class PayrollController extends Controller
 
             $deductions_amount = $social_security + $loan + $food + $fridge + $boutique + $others + $late_arrival; //Total deducciones
 
-            $amount = $amount + ($sums_amount - $deductions_amount); //Valor neto
+            $amount = $amount + ($sums_amount - $deductions_amount); //Valor neto 
 
             $total_accrued = $basic_quarter + $sums_amount; //Formula Funcional
 
@@ -725,7 +725,9 @@ class PayrollController extends Controller
                 $result["grupo_aval"][$count_grupo_aval]["full_name"] = $full_name;
                 $result["grupo_aval"][$count_grupo_aval]["bank"] = ($pay->user->bank_account_id == 2) ? "AVVILLAS" : $pay->user->bank->name;
                 // $result["grupo_aval"][$count_grupo_aval]["bank_account_type"] = ($pay->user->bank_account_type == 1) ? "AHORROS" : "CORRIENTE";
-                $result["grupo_aval"][$count_grupo_aval]["bank_account_type"] = ($pay->user->bank_account_type == "Ahorros") ? "AHORROS" : "CORRIENTE";
+                // $result["grupo_aval"][$count_grupo_aval]["bank_account_type"] = ($pay->user->bank_account_type == strcasecmp("Ahorros") == 0) ? "AHORROS" : "CORRIENTE";
+                $bank_account_type = strcasecmp($pay->user->bank_account_type, "Ahorros") == 0 ? "AHORROS" : "CORRIENTE"; // Tipo de cuenta, valida el nombre sin importar si el string esta en mayuscula o minuscula.
+                $result["grupo_aval"][$count_grupo_aval]["bank_account_type"] = $bank_account_type;
 
                 $result["grupo_aval"][$count_grupo_aval]["bank_account_number"] =  $pay->user->bank_account_number;
                 $result["grupo_aval"][$count_grupo_aval]["email_empty"] =  "";
@@ -739,7 +741,8 @@ class PayrollController extends Controller
                     $result["grupo_aval"][$count_grupo_aval]["full_name"] = $full_name;
                     $result["grupo_aval"][$count_grupo_aval]["bank"] = ($pay->user->has_bank_account == 2) ? "AVVILLAS" : $pay->user->bank->name;
                     //$result["grupo_aval"][$count_grupo_aval]["bank_account_type"] = ($pay->user->bank_account_type == 1) ? "AHORROS" : "CORRIENTE";//
-                    $result["grupo_aval"][$count_grupo_aval]["bank_account_type"] = ($pay->user->bank_account_type == "Ahorros") ? "AHORROS" : "CORRIENTE";
+                    $bank_account_type = strcasecmp($pay->user->bank_account_type, "Ahorros") == 0 ? "AHORROS" : "CORRIENTE"; // Tipo de cuenta, valida el nombre sin importar si el string esta en mayuscula o minuscula.
+                    $result["grupo_aval"][$count_grupo_aval]["bank_account_type"] = $bank_account_type;
 
                     $result["grupo_aval"][$count_grupo_aval]["bank_account_number"] =  $pay->user->bank_account_number;
                     $result["grupo_aval"][$count_grupo_aval]["email_empty"] =  "";
