@@ -1050,8 +1050,17 @@ class TaskController extends Controller
             $task = Task::find($request->task_id);
             $should_finish = $task->should_finish;
 
-            $should_finish = strtotime($time, strtotime($should_finish));
-            $should_finish = date('Y-m-d H:i:s', $should_finish);
+            /** 
+             * Si el trabajo está caducado se extiende el tiempo a partir de la fecha actual,
+             * de lo contrario se extiende a partir de la fecha de finalización
+             *  **/
+            if ($should_finish <= Carbon::now()) {
+                $should_finish = strtotime($time, strtotime(Carbon::now()));
+                $should_finish = date('Y-m-d H:i:s', $should_finish);
+            } else {
+                $should_finish = strtotime($time, strtotime($should_finish));
+                $should_finish = date('Y-m-d H:i:s', $should_finish);
+            }
 
             $task->should_finish = $should_finish;
             $task->save();

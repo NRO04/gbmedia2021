@@ -610,7 +610,7 @@ $("input[name=time_aprox]").on("click", function(){
 });
 
 $("input[name=time_aprox_extend]").on("click", function(){
-	if($(this).val() == "option-hours"){
+	if($(this).val() == "option-hours_extend"){
 		$("#div_days_extend").css('display' , 'none');
 		$("#div_hours_extend").css('display' , '');
 	}
