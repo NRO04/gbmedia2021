@@ -63,7 +63,7 @@
 
 								<div class="form-group row">
 									<div class="col-lg-11">
-										<label>Descripción</label>
+										<label>Descripci�n</label>
 										<textarea name="comment" id="comment" class="description"></textarea>
 									</div>
 								</div>
@@ -73,7 +73,7 @@
 										<div class="form-group row">
 											<div class="col-lg-5">
 												<label>Enviar a </label>
-												<i title="Elija los remitentes que puedan visualizar o deban recibir esta tarea o información, debe dejar presionada la tecla Ctrl( Control ) para elegir varias Areas o Usuarios" class="fa fa-question-circle"></i>
+												<i title="Elija los remitentes que puedan visualizar o deban recibir esta tarea o informaci�n, debe dejar presionada la tecla Ctrl( Control ) para elegir varias Areas o Usuarios" class="fa fa-question-circle"></i>
 												<div class="form-group row">
 													<div class="col-md-9 col-form-label">
 														<div class="form-check form-check-inline mr-1">
@@ -93,7 +93,7 @@
 											</div>
 											<div class="col-lg-4">
 												<label>Tiempo Estimado </label>
-												<i title="Escoja el tiempo que calcula esta tarea debe tomar en obtener una solución. Recuerde que la idea es que las tareas se realicen en el menor tiempo posible" class="fa fa-question-circle"></i>
+												<i title="Escoja el tiempo que calcula esta tarea debe tomar en obtener una soluci�n. Recuerde que la idea es que las tareas se realicen en el menor tiempo posible" class="fa fa-question-circle"></i>
 												<div class="form-group row">
 												<div class="col-md-9 col-form-label">
 												<div class="form-check form-check-inline mr-1">
@@ -108,7 +108,7 @@
 												</div>
 											</div>
 											<div class="col-lg-3">
-												<label>Adjuntar Archivos</label><i title="Si desea subir varios archivos ó imágenes, mantenga presionada la tecla CTRL (Control) del teclado y seleccione los archivos." class="fa fa-question-circle ml-1"></i>
+												<label>Adjuntar Archivos</label><i title="Si desea subir varios archivos � im�genes, mantenga presionada la tecla CTRL (Control) del teclado y seleccione los archivos." class="fa fa-question-circle ml-1"></i>
 												<div class="col-sm-7 col-lg-6 inputFile pl-0">
 									                <span class="btnFile btn-dark btn-sm">
 									                    <span id="spanFile">Seleccionar Archivos</span>
@@ -274,7 +274,7 @@
 									<div class="col-lg-12">
 										<div class="form-group row">
 											<div class="col-lg-9">
-												<label>Adjuntar Archivos</label><i title="Si desea subir varios archivos ó imágenes, mantenga presionada la tecla CTRL (Control) del teclado y seleccione los archivos." class="fa fa-question-circle ml-1"></i>
+												<label>Adjuntar Archivos</label><i title="Si desea subir varios archivos � im�genes, mantenga presionada la tecla CTRL (Control) del teclado y seleccione los archivos." class="fa fa-question-circle ml-1"></i>
 												<div class="col-sm-7 col-lg-6 inputFile pl-0">
 									                <span class="btnFile btn-dark btn-sm">
 									                    <span id="spanFile">Seleccionar Archivos</span>
@@ -469,6 +469,7 @@ var receivers_remove = {
 var seeing = {
 	'status' : 0,
 	'folder'  : 0,
+	'customDisplay': 0,
 }
 
 $('.send-to').click(function(){
@@ -747,6 +748,9 @@ function decode_utf8(s) {
 
 function ShowFolders()
 {
+
+	
+
 	$.ajax({
 		url: '{{ route('tasks.get_folders')}}',
 		type: 'GET',
@@ -763,10 +767,13 @@ function ShowFolders()
 			})
 			.done(function(res) {
 				$("#modal-body-folders").html(res)
+				
 			});
 
 		});
 	});
+
+	
 }
 
 //create folder
@@ -808,40 +815,52 @@ function displayCustomTask(folderId){
 	
 	$("#task-table_info").css("display","none");
 
+	seeing.customDisplay = 1;
+
+	console.log(seeing);
+	
 	if(folderId == 'midUrgencyFolder' ){
-		$(".lowUrgencyTask").css("display","none");	
-		$(".highUrgencyTask").css("display","none");
-		$(".midUrgencyTask").css("display","");
-		$(".expiredTask").css("display","none");			
-		$("#midUrgencyFolder").css("color","gold");
-		$("#lowUrgencyFolder").css("color","darkolivegreen");
-		$("#highUrgencyFolder").css("color","brown");
+		console.log(folderId);
+		seeing.customDisplay = 3;
+		Mytable.data('seeing', seeing);
+		Mytable.draw();
+		ShowFolders();
+		
 	}else if(folderId == 'highUrgencyFolder'){
-		$(".lowUrgencyTask").css("display","none");	
-		$(".highUrgencyTask").css("display","");
-		$(".midUrgencyTask").css("display","none");	
-		$(".expiredTask").css("display","");		
-		$("#midUrgencyFolder").css("color","darkgoldenrod");
-		$("#lowUrgencyFolder").css("color","darkolivegreen");
-		$("#highUrgencyFolder").css("color","red");
+		console.log(folderId);
+		seeing.customDisplay = 2;
+		Mytable.data('seeing', seeing);
+		Mytable.draw();
+		ShowFolders();
+		
+	}else if(folderId == 'myTaskFolder'){
+		console.log(folderId);
+		seeing.customDisplay = 1;
+		Mytable.data('seeing', seeing);
+		Mytable.draw();
+		ShowFolders();
+		
 	}else{
-		$(".lowUrgencyTask").css("display","");	
-		$(".highUrgencyTask").css("display","none");
-		$(".midUrgencyTask").css("display","none");
-		$(".expiredTask").css("display","none");				
-		$("#midUrgencyFolder").css("color","darkgoldenrod");
-		$("#lowUrgencyFolder").css("color","green");
-		$("#highUrgencyFolder").css("color","brown");
-	}
+		console.log(folderId);
+		seeing.customDisplay = 4;
+		Mytable.data('seeing', seeing);
+		Mytable.draw();
+		ShowFolders();
+	 	
+	}	
 	
 }
 
 function ShowTaskFolder(status,folder)
 {
-	seeing = {
-		'status' : status,
-		'folder'  : folder,
-	}
+	// seeing = {
+	// 	'status' : status,
+	// 	'folder'  : folder,
+	// }
+
+	seeing.status = status;
+	seeing.folder = folder;
+
 	Mytable.data('seeing', seeing);
     Mytable.draw();
     ShowFolders();
@@ -1145,8 +1164,8 @@ function updatePulsing(task_id, pulsing)
 function signOutTask()
 {
 	SwalGB.fire({
-                title: "¿Está seguro?",
-                text: "¿ Desea retirarse del trabajo ?",
+                title: "�Est� seguro?",
+                text: "� Desea retirarse del trabajo ?",
                 icon: "question",
     }).then(result => {
         if (result.value) {
@@ -1245,8 +1264,8 @@ $("#btn-replaycomment").on("click" , function(){
 
 $("#btn-finish_task").on("click" , function(){
 	SwalGB.fire({
-                title: "¿Está seguro?",
-                text: "¿ Desea finalizar el trabajo ?. Tenga en cuenta que este proceso no es reversible !!!",
+                title: "�Est� seguro?",
+                text: "� Desea finalizar el trabajo ?. Tenga en cuenta que este proceso no es reversible !!!",
                 icon: "question",
     }).then(result => {
         if (result.value) {
@@ -1263,7 +1282,6 @@ $("#btn-finish_task").on("click" , function(){
 		        });
 		        contentComments(task_id);
 		        Mytable.draw();
-				ShowFolders(); // Se actualiza las carpetas
         	})
         	.fail(function() {
 				Toast.fire({

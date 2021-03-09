@@ -176,46 +176,145 @@ class TaskController extends Controller
     {
         if ($request->ajax()) {
 
+            
             //pendientes
-            if ($request->seeing['status'] == 0 && $request->seeing['folder'] == 0) {
-
+            if ($request->seeing['status'] == 0 && $request->seeing['folder'] == 0) {               
+                
                 $data = Task::join('task_user_status', 'tasks.id', '=', 'task_user_status.task_id')
                     ->select("tasks.*", 'task_user_status.status as status_user', 'task_user_status.id as task_status_id', 'task_user_status.pulsing as pulsing')
                     ->where('task_user_status.user_id', '=', Auth::user()->id)
                     ->where('task_user_status.status', '=', 0)
                     ->where('task_user_status.folder', '=', 0)
                     ->where('tasks.status', '=', 0)
-                    ->orderBy('pulsing', 'desc')->orderBy('task_user_status.created_at', 'asc')->get();
+                    ->orderBy('pulsing', 'desc')->orderBy('task_user_status.created_at', 'asc')->get()
+                    ;
             }
             //en alguna carpeta
             elseif ($request->seeing['status'] == 0 && $request->seeing['folder'] != 0) {
-
+                
                 $data = Task::join('task_user_status', 'tasks.id', '=', 'task_user_status.task_id')
                     ->select("tasks.*", 'task_user_status.status as status_user', 'task_user_status.id as task_status_id', 'task_user_status.pulsing as pulsing')
                     ->where('task_user_status.user_id', '=', Auth::user()->id)
                     ->where('task_user_status.status', '=', 0)
                     ->where('task_user_status.folder', '=', $request->seeing['folder'])
                     ->where('tasks.status', '=', 0)
-                    ->orderBy('pulsing', 'desc')->orderBy('task_user_status.created_at', 'asc')->get();
+                    ->orderBy('pulsing', 'desc')->orderBy('task_user_status.created_at', 'asc')->get()
+                    ;
             }
             //finalizados
             else {
+                
                 $data = Task::join('task_user_status', 'tasks.id', '=', 'task_user_status.task_id')
                     ->select("tasks.*", 'task_user_status.status as status_user', 'task_user_status.id as task_status_id', 'task_user_status.pulsing as pulsing')
                     ->where('task_user_status.user_id', '=', Auth::user()->id)
                     ->where('task_user_status.status', '=', 1)
                     ->orWhere('task_user_status.user_id', '=', Auth::user()->id)
                     ->where('tasks.status', 1)
-                    ->orderBy('pulsing', 'desc')->orderBy('task_user_status.created_at', 'asc')->get();
+                    ->orderBy('pulsing', 'desc')->orderBy('task_user_status.created_at', 'asc')->get()
+                    ;
 
-                /*$data = Task::join('task_user_status', 'tasks.id', '=', 'task_user_status.task_id')
-                    ->select("tasks.*", 'task_user_status.status as status_user', 'task_user_status.id as task_status_id', 'task_user_status.pulsing as pulsing')
-                    ->where('task_user_status.user_id', '=', Auth::user()->id)
-                    ->where('task_user_status.status', '=', 1)
-                    ->where('task_user_status.folder', '=', 1)
-                    ->where('tasks.status', '=', 1)->get();*/
+               
             }
 
+            
+            if($request->seeing['customDisplay']==1){
+
+                $records = [];
+
+                $currentDate = date("Y-m-d h:i:sa");
+
+                foreach($data as $record){
+                                        
+                    if(Auth::user()->id == $record->created_by){
+                        array_push($records, $record);  
+                    }
+                                 
+                }
+                
+                $data = $records; 
+            
+            }
+                        
+            if($request->seeing['customDisplay']==3){
+
+                $records = [];
+
+                $currentDate = date("Y-m-d h:i:sa");
+
+                foreach($data as $record){
+                    //echo $record->should_finish; 
+                    $interval = (strtotime($record->should_finish) - strtotime($currentDate)) / (60 * 60); 
+
+                    if(24 < $interval && $interval < 72){
+                        array_push($records, $record);  
+                    }
+                                 
+                }
+                
+                $data = $records; 
+            
+            }
+
+
+            if($request->seeing['customDisplay']==3){
+
+                $records = [];
+
+                $currentDate = date("Y-m-d h:i:sa");
+
+                foreach($data as $record){
+                    //echo $record->should_finish; 
+                    $interval = (strtotime($record->should_finish) - strtotime($currentDate)) / (60 * 60); 
+
+                    if(24 < $interval && $interval < 72){
+                        array_push($records, $record);  
+                    }
+                                 
+                }
+                
+                $data = $records; 
+            
+            }
+
+            if($request->seeing['customDisplay']==2){
+
+                $records = [];
+
+                $currentDate = date("Y-m-d h:i:sa");
+
+                foreach($data as $record){
+                    //echo $record->should_finish; 
+                    $interval = (strtotime($record->should_finish) - strtotime($currentDate)) / (60 * 60); 
+
+                    if($interval < 24 && $interval > 0 || 0 > $interval){
+                        array_push($records, $record);  
+                    }
+                                 
+                }
+                
+                $data = $records; 
+            
+            }
+
+            if($request->seeing['customDisplay']==4){
+
+                $records = [];
+
+                $currentDate = date("Y-m-d h:i:sa");
+
+                foreach($data as $record){
+                    //echo $record->should_finish; 
+                    $interval = (strtotime($record->should_finish) - strtotime($currentDate)) / (60 * 60); 
+
+                    if(72 < $interval){
+                        array_push($records, $record);  
+                    }
+                                 
+                }
+                
+                $data = $records; 
+            
+            }
 
             return DataTables::of($data)
                 ->addIndexColumn()
@@ -382,11 +481,53 @@ class TaskController extends Controller
         ";
         $folders = TaskUserFolder::where('user_id', '=', Auth::user()->id)->get();
         $count = TaskUserStatus::where('user_id', '=', Auth::user()->id)->where('status', '=', 0)->where('folder', '=', 0)->count();
+        
+        $lowUrgencyColor = "darkolivegreen";
+        $midUrgencyColor = "darkgoldenrod";
+        $highUrgencyColor = "brown";
+        $myTaskColor = "slateBlue";
+
+        if($request->seeing['customDisplay']==3){        
+            $lowUrgencyColor = "darkolivegreen";
+            $midUrgencyColor = "gold";
+            $highUrgencyColor = "brown";         
+            $myTaskColor = "slateBlue";
+        }elseif($request->seeing['customDisplay']==2){
+            $lowUrgencyColor = "darkolivegreen";
+            $midUrgencyColor = "darkgoldenrod";
+            $highUrgencyColor = "red";
+            $myTaskColor = "slateBlue";
+        }elseif($request->seeing['customDisplay']==4){
+            $lowUrgencyColor = "green";
+            $midUrgencyColor = "darkgoldenrod";
+            $highUrgencyColor = "brown";
+            $myTaskColor = "slateBlue";
+        }elseif($request->seeing['customDisplay']==1){
+            $lowUrgencyColor = "darkolivegreen";
+            $midUrgencyColor = "darkgoldenrod";
+            $highUrgencyColor = "brown";
+            $myTaskColor = "DodgerBlue";
+        }
+        
+        
         $result .=  "
             <div style='border-color: #4f5d73;'>
+            <div id='myTaskFolder' class='col-lg-12 d-flex pr-0 pl-1 taskFolder' 
+                            onclick='displayCustomTask(this.id)' 
+                            style='cursor: pointer;color:$myTaskColor '>
+                            <div class='col-lg-2 pr-0 pl-0'>
+                                <i class='fa fa-inbox'></i>
+                            </div>
+                            <div class='col-lg-10 pr-0 pl-0'>
+                                <label style='cursor: pointer'> Mis Trabajos</label>
+                            </div>
+                            
+                        </div>";
+
+        $result .=  "          
             <div id='highUrgencyFolder' class='col-lg-12 d-flex pr-0 pl-1 taskFolder' 
                             onclick='displayCustomTask(this.id)' 
-                            style='cursor: pointer;color:brown'>
+                            style='cursor: pointer;color:$highUrgencyColor'>
                             <div class='col-lg-2 pr-0 pl-0'>
                                 <i class='fas fa-arrow-alt-circle-up'></i>
                             </div>
@@ -398,7 +539,7 @@ class TaskController extends Controller
 
             $result .=  "<div id='midUrgencyFolder' class='col-lg-12 d-flex pr-0 pl-1 taskFolder' 
                             onclick='displayCustomTask(this.id)' 
-                            style='cursor: pointer;color:darkgoldenrod'>
+                            style='cursor: pointer;color:$midUrgencyColor'>
                             <div class='col-lg-2 pr-0 pl-0'>
                                 <i class='fas fa-arrow-alt-circle-right'></i>
                             </div>
@@ -409,7 +550,7 @@ class TaskController extends Controller
 
             $result .=  "<div id='lowUrgencyFolder' class='col-lg-12 d-flex pr-0 pl-1 taskFolder' 
                             onclick='displayCustomTask(this.id)' 
-                            style='cursor: pointer;color:darkolivegreen'>
+                            style='cursor: pointer;color:$lowUrgencyColor'>
                             <div class='col-lg-2 pr-0 pl-0'>
                                 <i class='fas fa-arrow-alt-circle-down'></i>
                             </div>
