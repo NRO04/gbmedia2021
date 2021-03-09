@@ -1263,6 +1263,7 @@ $("#btn-finish_task").on("click" , function(){
 		        });
 		        contentComments(task_id);
 		        Mytable.draw();
+				ShowFolders(); // Se actualiza las carpetas
         	})
         	.fail(function() {
 				Toast.fire({
