@@ -782,7 +782,7 @@ class TaskController extends Controller
                                 </div>
                                 <div class='col-11 pl-0'>
                                     <h6 class='text-muted mb-0'>{$full_name}</h6>
-                                    <small class='text-muted'>" . ucfirst(Carbon::parse($comment->created_at)->diffForHumans()) . " (" . Carbon::parse($comment->created_at)->format('d/M/Y h:i a') . ")</small>
+                                    <small class='text-muted'>" . ucfirst( Carbon::now() ->diffForHumans(Carbon::parse($comment->created_at),true,false,6) )  . " (" . Carbon::parse($comment->created_at)->format('d/M/Y h:i a') . ")</small>
                                 </div>
                             </div>
                         </div>

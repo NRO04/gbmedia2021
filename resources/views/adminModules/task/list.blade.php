@@ -1014,6 +1014,8 @@ function NuevoReloj()
     });
 }
 
+
+//click one task
 $("#task-table").on("click", ".TdClass_task" , function(){
 	id = $(this).parent().prop("id");
 	id = id.split("_");
