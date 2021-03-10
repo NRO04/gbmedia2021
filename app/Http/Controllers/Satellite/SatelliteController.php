@@ -1576,11 +1576,38 @@ class SatelliteController extends Controller
 
     }
 
-    public function getOwners()
+    /**
+     * Return owner's id who have received payment in a period of time
+     * @author Luis Muñoz
+     * @param integer $month
+     * @return array $owners_id
+     */
+    public function getOwnersIdWithPayments($months) {
+        $ownersId = [];
+        $date = date('Y-m-d', strtotime(Carbon::now()."- .$months month"));
+
+        $ownersPayments = SatellitePaymentPayroll::select('owner_id')
+                        ->distinct()
+                        ->where('created_at', '>=', $date)
+                        ->get();
+        
+        foreach ($ownersPayments as $ownerPayment) {
+            $ownersId[] = $ownerPayment->owner_id;
+        }
+
+        return $ownersId;
+    }
+
+    public function getOwners(Request $request)
     {
         $owners = SatelliteOwner::select('id','owner','first_name', 'second_name', 'last_name', 'second_last_name', 'email', 'commission_percent', 'phone', 'status', 'others_emails', 'statistics_emails')
-            ->where('is_user', 0)->orderBy('status', 'ASC')->get();
-        $count = SatelliteOwner::where('is_user', 0)->count();
+            ->where('is_user', 0);
+        if ($request->months > 0) {
+            $owners = $owners->whereIn('id', $this->getOwnersIdWithPayments($request->months));
+        }  
+        $owners = $owners->orderBy('status', 'ASC')->get();
+
+        $count = $owners->count();
         $cont = 0;
         $result = [];
         foreach($owners as $key => $owner){
@@ -1630,12 +1657,18 @@ class SatelliteController extends Controller
         if ($request->status_filter == 0)
         {
             $owners = SatelliteOwner::select('id','owner','first_name', 'second_name', 'last_name', 'second_last_name', 'email', 'commission_percent', 'phone', 'status', 'purchase_limit')
-                ->where('is_user', 1)->orderBy('status', 'ASC')->get();
+                ->where('is_user', 1);
         }
         else{
             $owners = SatelliteOwner::select('id','owner','first_name', 'second_name', 'last_name', 'second_last_name', 'email', 'commission_percent', 'phone', 'status', 'purchase_limit')
-                ->where('is_user', 1)->where('status', $request->status_filter)->orderBy('status', 'ASC')->get();
+                ->where('is_user', 1)->where('status', $request->status_filter);
         }
+
+        if ($request->months > 0) {
+            $owners = $owners->whereIn('id', $this->getOwnersIdWithPayments($request->months));
+        }
+
+        $owners = $owners->orderBy('status', 'ASC')->get();
 
 
         $cont = 0;
@@ -1657,10 +1690,16 @@ class SatelliteController extends Controller
         return response()->json($result);
     }
 
-    public function getOwnersManaged()
+    public function getOwnersManaged(Request $request)
     {
         $owners = SatelliteOwner::select('id','owner','first_name', 'second_name', 'last_name', 'second_last_name', 'email', 'commission_percent', 'phone', 'status', 'user_manager')
-            ->where('user_manager', '!=', null)->get();
+            ->where('user_manager', '!=', null);
+        
+        if ($request->months > 0) {
+            $owners = $owners->whereIn('id', $this->getOwnersIdWithPayments($request->months));
+        }
+
+        $owners = $owners->orderBy('status', 'ASC')->get();
 
         $cont = 0;
         $result = [];

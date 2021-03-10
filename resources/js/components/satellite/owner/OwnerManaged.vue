@@ -136,9 +136,7 @@
 
     export default {
         name: "owner-managed",
-        props: [
-            'permissions',
-        ],
+        props: ["permissions", "months"],
         data() {
             return{
                 owners: [],
@@ -169,13 +167,18 @@
         created() {
             this.getOwners();
         },
+        watch: {
+            months() {
+                this.getOwners();
+            },
+        },
         methods:{
             can(permission_name) {
                 return this.permissions.indexOf(permission_name) !== -1;
             },
             getOwners(){
                 this.show = true;
-                axios.get(route('satellite.owners_managed')).then(response => {
+                axios.get(route('satellite.owners_managed', {months: this.months})).then(response => {
                     console.log(response.data);
                     this.owners = response.data;
                     this.show = false;
