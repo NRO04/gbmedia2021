@@ -1650,10 +1650,9 @@ class UserController extends Controller
 
             $changes = $user->getChanges();
 
-            $owner = SatelliteOwner::where('user_id', $user->id)->first();
-            if ($owner == null)
+            if (SatelliteOwner::where('user_id', $user->id)->first())
             {
-                $owner = new SatelliteOwner();
+                $owner = SatelliteOwner::where('user_id', $user->id)->first();
                 $owner->owner = trim($user->nick);
                 $owner->email = $user->email;
                 $owner->first_name = $user->first_name;
