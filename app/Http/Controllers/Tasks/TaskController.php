@@ -176,144 +176,129 @@ class TaskController extends Controller
     {
         if ($request->ajax()) {
 
-            
+
             //pendientes
-            if ($request->seeing['status'] == 0 && $request->seeing['folder'] == 0) {               
-                
+            if ($request->seeing['status'] == 0 && $request->seeing['folder'] == 0) {
+
                 $data = Task::join('task_user_status', 'tasks.id', '=', 'task_user_status.task_id')
                     ->select("tasks.*", 'task_user_status.status as status_user', 'task_user_status.id as task_status_id', 'task_user_status.pulsing as pulsing')
                     ->where('task_user_status.user_id', '=', Auth::user()->id)
                     ->where('task_user_status.status', '=', 0)
                     ->where('task_user_status.folder', '=', 0)
                     ->where('tasks.status', '=', 0)
-                    ->orderBy('pulsing', 'desc')->orderBy('task_user_status.created_at', 'asc')->get()
-                    ;
+                    ->orderBy('pulsing', 'desc')->orderBy('task_user_status.created_at', 'asc')->get();
             }
             //en alguna carpeta
             elseif ($request->seeing['status'] == 0 && $request->seeing['folder'] != 0) {
-                
+
                 $data = Task::join('task_user_status', 'tasks.id', '=', 'task_user_status.task_id')
                     ->select("tasks.*", 'task_user_status.status as status_user', 'task_user_status.id as task_status_id', 'task_user_status.pulsing as pulsing')
                     ->where('task_user_status.user_id', '=', Auth::user()->id)
                     ->where('task_user_status.status', '=', 0)
                     ->where('task_user_status.folder', '=', $request->seeing['folder'])
                     ->where('tasks.status', '=', 0)
-                    ->orderBy('pulsing', 'desc')->orderBy('task_user_status.created_at', 'asc')->get()
-                    ;
+                    ->orderBy('pulsing', 'desc')->orderBy('task_user_status.created_at', 'asc')->get();
             }
             //finalizados
             else {
-                
+
                 $data = Task::join('task_user_status', 'tasks.id', '=', 'task_user_status.task_id')
                     ->select("tasks.*", 'task_user_status.status as status_user', 'task_user_status.id as task_status_id', 'task_user_status.pulsing as pulsing')
                     ->where('task_user_status.user_id', '=', Auth::user()->id)
                     ->where('task_user_status.status', '=', 1)
                     ->orWhere('task_user_status.user_id', '=', Auth::user()->id)
                     ->where('tasks.status', 1)
-                    ->orderBy('pulsing', 'desc')->orderBy('task_user_status.created_at', 'asc')->get()
-                    ;
-
-               
+                    ->orderBy('pulsing', 'desc')->orderBy('task_user_status.created_at', 'asc')->get();
             }
 
-            
-            if($request->seeing['customDisplay']==1){
+
+            if ($request->seeing['customDisplay'] == 1) {
 
                 $records = [];
 
                 $currentDate = date("Y-m-d h:i:sa");
 
-                foreach($data as $record){
-                                        
-                    if(Auth::user()->id == $record->created_by){
-                        array_push($records, $record);  
+                foreach ($data as $record) {
+
+                    if (Auth::user()->id == $record->created_by) {
+                        array_push($records, $record);
                     }
-                                 
                 }
-                
-                $data = $records; 
-            
+
+                $data = $records;
             }
-                        
-            if($request->seeing['customDisplay']==3){
+
+            if ($request->seeing['customDisplay'] == 3) {
 
                 $records = [];
 
                 $currentDate = date("Y-m-d h:i:sa");
 
-                foreach($data as $record){
+                foreach ($data as $record) {
                     //echo $record->should_finish; 
-                    $interval = (strtotime($record->should_finish) - strtotime($currentDate)) / (60 * 60); 
+                    $interval = (strtotime($record->should_finish) - strtotime($currentDate)) / (60 * 60);
 
-                    if(24 < $interval && $interval < 72){
-                        array_push($records, $record);  
+                    if (24 < $interval && $interval < 72) {
+                        array_push($records, $record);
                     }
-                                 
                 }
-                
-                $data = $records; 
-            
+
+                $data = $records;
             }
 
 
-            if($request->seeing['customDisplay']==3){
+            if ($request->seeing['customDisplay'] == 3) {
 
                 $records = [];
 
                 $currentDate = date("Y-m-d h:i:sa");
 
-                foreach($data as $record){
+                foreach ($data as $record) {
                     //echo $record->should_finish; 
-                    $interval = (strtotime($record->should_finish) - strtotime($currentDate)) / (60 * 60); 
+                    $interval = (strtotime($record->should_finish) - strtotime($currentDate)) / (60 * 60);
 
-                    if(24 < $interval && $interval < 72){
-                        array_push($records, $record);  
+                    if (24 < $interval && $interval < 72) {
+                        array_push($records, $record);
                     }
-                                 
                 }
-                
-                $data = $records; 
-            
+
+                $data = $records;
             }
 
-            if($request->seeing['customDisplay']==2){
+            if ($request->seeing['customDisplay'] == 2) {
 
                 $records = [];
 
                 $currentDate = date("Y-m-d h:i:sa");
 
-                foreach($data as $record){
+                foreach ($data as $record) {
                     //echo $record->should_finish; 
-                    $interval = (strtotime($record->should_finish) - strtotime($currentDate)) / (60 * 60); 
+                    $interval = (strtotime($record->should_finish) - strtotime($currentDate)) / (60 * 60);
 
-                    if($interval < 24 && $interval > 0 || 0 > $interval){
-                        array_push($records, $record);  
+                    if ($interval < 24 && $interval > 0 || 0 > $interval) {
+                        array_push($records, $record);
                     }
-                                 
                 }
-                
-                $data = $records; 
-            
+
+                $data = $records;
             }
 
-            if($request->seeing['customDisplay']==4){
+            if ($request->seeing['customDisplay'] == 4) {
 
                 $records = [];
 
                 $currentDate = date("Y-m-d h:i:sa");
 
-                foreach($data as $record){
+                foreach ($data as $record) {
                     //echo $record->should_finish; 
-                    $interval = (strtotime($record->should_finish) - strtotime($currentDate)) / (60 * 60); 
+                    $interval = (strtotime($record->should_finish) - strtotime($currentDate)) / (60 * 60);
 
-                    if(72 < $interval){
-                        array_push($records, $record);  
+                    if (72 < $interval) {
+                        array_push($records, $record);
                     }
-                                 
                 }
-                
-                $data = $records; 
-            
+
+                $data = $records;
             }
 
             return DataTables::of($data)
@@ -481,35 +466,35 @@ class TaskController extends Controller
         ";
         $folders = TaskUserFolder::where('user_id', '=', Auth::user()->id)->get();
         $count = TaskUserStatus::where('user_id', '=', Auth::user()->id)->where('status', '=', 0)->where('folder', '=', 0)->count();
-        
+
         $lowUrgencyColor = "darkolivegreen";
         $midUrgencyColor = "darkgoldenrod";
         $highUrgencyColor = "brown";
         $myTaskColor = "slateBlue";
 
-        if($request->seeing['customDisplay']==3){        
+        if ($request->seeing['customDisplay'] == 3) {
             $lowUrgencyColor = "darkolivegreen";
             $midUrgencyColor = "gold";
-            $highUrgencyColor = "brown";         
+            $highUrgencyColor = "brown";
             $myTaskColor = "slateBlue";
-        }elseif($request->seeing['customDisplay']==2){
+        } elseif ($request->seeing['customDisplay'] == 2) {
             $lowUrgencyColor = "darkolivegreen";
             $midUrgencyColor = "darkgoldenrod";
             $highUrgencyColor = "red";
             $myTaskColor = "slateBlue";
-        }elseif($request->seeing['customDisplay']==4){
+        } elseif ($request->seeing['customDisplay'] == 4) {
             $lowUrgencyColor = "green";
             $midUrgencyColor = "darkgoldenrod";
             $highUrgencyColor = "brown";
             $myTaskColor = "slateBlue";
-        }elseif($request->seeing['customDisplay']==1){
+        } elseif ($request->seeing['customDisplay'] == 1) {
             $lowUrgencyColor = "darkolivegreen";
             $midUrgencyColor = "darkgoldenrod";
             $highUrgencyColor = "brown";
             $myTaskColor = "DodgerBlue";
         }
-        
-        
+
+
         $result .=  "
             <div style='border-color: #4f5d73;'>
             <div id='myTaskFolder' class='col-lg-12 d-flex pr-0 pl-1 taskFolder' 
@@ -537,7 +522,7 @@ class TaskController extends Controller
                             
                         </div>";
 
-            $result .=  "<div id='midUrgencyFolder' class='col-lg-12 d-flex pr-0 pl-1 taskFolder' 
+        $result .=  "<div id='midUrgencyFolder' class='col-lg-12 d-flex pr-0 pl-1 taskFolder' 
                             onclick='displayCustomTask(this.id)' 
                             style='cursor: pointer;color:$midUrgencyColor'>
                             <div class='col-lg-2 pr-0 pl-0'>
@@ -548,7 +533,7 @@ class TaskController extends Controller
                             </div>
                         </div>";
 
-            $result .=  "<div id='lowUrgencyFolder' class='col-lg-12 d-flex pr-0 pl-1 taskFolder' 
+        $result .=  "<div id='lowUrgencyFolder' class='col-lg-12 d-flex pr-0 pl-1 taskFolder' 
                             onclick='displayCustomTask(this.id)' 
                             style='cursor: pointer;color:$lowUrgencyColor'>
                             <div class='col-lg-2 pr-0 pl-0'>
@@ -768,22 +753,7 @@ class TaskController extends Controller
                 }
             }
 
-            $interval = "";
-            $diferenceformat = "";
-
-            if (date_diff($comment->created_at, Carbon::now())->format('%m') > 1 ){
-                $diferenceformat.='%m meses';
-            }else{
-                $diferenceformat.='%m mes';
-            }
-
-            if (date_diff($comment->created_at, Carbon::now())->format('%d') > 1 ){
-                $diferenceformat.=' %d dias';
-            }else{
-                $diferenceformat.=' %d dias';
-            }
-            
-            $interval = date_diff($comment->created_at, Carbon::now())->format($diferenceformat);
+            $interval = $this->getDateDifferenceComment($comment->created_at);
 
             $src = is_null($comment->user->avatar) ? asset("images/svg/no-photo.svg") : global_asset("../storage/app/public/" . tenant('studio_slug') . "/avatars/" . $comment->user->avatar);
             $result["comments"] .=
@@ -821,6 +791,31 @@ class TaskController extends Controller
         //$this->notificationSeen($task_id);
         //event(new NewMessage());
         return $result;
+    }
+
+    /**
+     * Input commentDateCreation @var date
+     * 
+     *  **/
+    public function getDateDifferenceComment($commentDate)
+    {
+
+        $diferenceformat = "";
+
+        $dateDifferenceMonths = date_diff($commentDate, Carbon::now())->format('%m');
+        $dateDifferenceDays = date_diff($commentDate, Carbon::now())->format('%d');
+
+        if ($dateDifferenceMonths >= 1) {
+            ($dateDifferenceMonths == 1) ? $diferenceformat .= '%m mes' : $diferenceformat .= '%m meses';
+            ($dateDifferenceDays > 1) ? $diferenceformat .= ' %d dias' : $diferenceformat .= ' %d dia';
+        } else {
+
+            ($dateDifferenceDays > 1) ? $diferenceformat .= ' %d dias' : $diferenceformat .= ' %d dia';
+        }
+
+        $interval = date_diff($commentDate, Carbon::now())->format($diferenceformat);
+
+        return $interval;
     }
 
     public function notificationSeen($task_id)
