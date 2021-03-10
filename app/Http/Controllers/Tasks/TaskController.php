@@ -768,6 +768,23 @@ class TaskController extends Controller
                 }
             }
 
+            $interval = "";
+            $diferenceformat = "";
+
+            if (date_diff($comment->created_at, Carbon::now())->format('%m') > 1 ){
+                $diferenceformat.='%m meses';
+            }else{
+                $diferenceformat.='%m mes';
+            }
+
+            if (date_diff($comment->created_at, Carbon::now())->format('%d') > 1 ){
+                $diferenceformat.=' %d dias';
+            }else{
+                $diferenceformat.=' %d dias';
+            }
+            
+            $interval = date_diff($comment->created_at, Carbon::now())->format($diferenceformat);
+
             $src = is_null($comment->user->avatar) ? asset("images/svg/no-photo.svg") : global_asset("../storage/app/public/" . tenant('studio_slug') . "/avatars/" . $comment->user->avatar);
             $result["comments"] .=
                 "<div class='card mb-2'>
@@ -782,7 +799,7 @@ class TaskController extends Controller
                                 </div>
                                 <div class='col-11 pl-0'>
                                     <h6 class='text-muted mb-0'>{$full_name}</h6>
-                                    <small class='text-muted'>" . ucfirst( Carbon::now() ->diffForHumans(Carbon::parse($comment->created_at),true,false,6) )  . " (" . Carbon::parse($comment->created_at)->format('d/M/Y h:i a') . ")</small>
+                                    <small class='text-muted'>" . $interval .  " (" . Carbon::parse($comment->created_at)->format('d/M/Y h:i a') . ")</small>
                                 </div>
                             </div>
                         </div>
