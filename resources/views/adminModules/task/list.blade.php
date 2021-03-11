@@ -472,6 +472,25 @@ var seeing = {
 	'customDisplay': 0,
 }
 
+function cleanReceivers() {
+	receivers = {
+		'to_roles' : [],
+		'to_users' : [],
+		'to_models' : [],
+	};
+
+	receivers_add = {
+		'to_roles' : [],
+		'to_users' : [],
+		'to_models' : [],
+	};
+
+	receivers_remove = {
+		'to_roles' : [],
+		'to_users' : [],
+	};
+}
+
 $('.send-to').click(function(){
     if($(this).prop("checked") == true){
     	if ($(this).prop("id") == "checkbox_roles")
@@ -673,9 +692,9 @@ $("#btn-create").on("click" , function(){
 	                icon: "error",
 	                title: "Upss... Ha ocurrido un error, comuniquese con el ADMIN",
 	            });
-			$("#btn-create").prop('disabled' , false);
+			$("#btn-create").prop('disabled' , false);			
 		});
-
+		cleanReceivers();
 	}
 	else
 	{
@@ -1481,7 +1500,7 @@ $("#btn_add_receivers").on('click', function() {
             title: "Se ha producido un error, contactese con el ADMIN",
         });
 	});
-
+	cleanReceivers();
 });
 
 $("#goDown").on("click" , function(){
@@ -1565,7 +1584,6 @@ $("#btn_remove_receivers").on('click', function() {
             icon: "success",
             title: "Recipientes eliminados",
         });
-
         receiversComments(task_id);
         contentComments(task_id);
         $("#modal-receivers_remove").modal("hide");
@@ -1576,7 +1594,7 @@ $("#btn_remove_receivers").on('click', function() {
             title: "Se ha producido un error, contactese con el ADMIN",
         });
 	});
-
+	cleanReceivers();
 });
 
 $("#btn_extend_time").on('click', function() {

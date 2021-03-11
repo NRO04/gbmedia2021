@@ -22,6 +22,7 @@ use Carbon\Carbon;
 use App\Events\NewMessage;
 use App\Notifications\TaskCommentNotification;
 use Illuminate\Support\Facades\Schema;
+use Spatie\Permission\Models\Role;
 
 class TaskController extends Controller
 {
@@ -182,7 +183,7 @@ class TaskController extends Controller
 
                 $data = Task::join('task_user_status', 'tasks.id', '=', 'task_user_status.task_id')
                     ->select("tasks.*", 'task_user_status.status as status_user', 'task_user_status.id as task_status_id', 'task_user_status.pulsing as pulsing')
-                    ->where('task_user_status.user_id', '=', Auth::user()->id)
+                    ->where('task_user_status.user_id', '=', Auth::user()->id)           
                     ->where('task_user_status.status', '=', 0)
                     ->where('task_user_status.folder', '=', 0)
                     ->where('tasks.status', '=', 0)
@@ -206,7 +207,6 @@ class TaskController extends Controller
                     ->select("tasks.*", 'task_user_status.status as status_user', 'task_user_status.id as task_status_id', 'task_user_status.pulsing as pulsing')
                     ->where('task_user_status.user_id', '=', Auth::user()->id)
                     ->where('task_user_status.status', '=', 1)
-                    ->orWhere('task_user_status.user_id', '=', Auth::user()->id)
                     ->where('tasks.status', 1)
                     ->orderBy('pulsing', 'desc')->orderBy('task_user_status.created_at', 'asc')->get();
             }
@@ -563,7 +563,7 @@ class TaskController extends Controller
             $active = 1;
 
         $count = TaskUserStatus::where('user_id', '=', Auth::user()->id)->where('status', '=', 1)->count();
-        $result .= $this->createFolderStructure("Finalizados", 0, 1, 0, $active);
+        $result .= $this->createFolderStructure("Finalizados", $count, 1, 0, $active);
 
 
 
@@ -1033,14 +1033,23 @@ class TaskController extends Controller
                     $comment .= ($comment == "") ?  $to_roles[$i]->name : ", " . $to_roles[$i]->name;
                 }
 
-                $users = User::where('setting_role_id', '=', $to_roles[$i]->id)->get();
+                //$users = User::where('setting_role_id', '=', $to_roles[$i]->id)->get();
+                $users = Role::findById($to_roles[$i]->id)->users;
                 foreach ($users as $key => $user) {
-                    $exists = TaskUserStatus::where('user_id', '=', $user->id)->where('task_id', '=', $request->task_id)->exists();
-                    if ($exists == false) {
+                    $existsUserStatus = TaskUserStatus::where('user_id', '=', $user->id)->where('task_id', '=', $request->task_id)->exists();
+                    if ($existsUserStatus == false) {
                         $task_user_status = new TaskUserStatus();
                         $task_user_status->task_id = $request->task_id;
                         $task_user_status->user_id = $user->id;
                         $task_user_status->save();
+                    }
+
+                    $existsUserReceivers = TaskUsersReceivers::where('user_id', '=', $user->id)->where('task_id', '=', $request->task_id)->exists();
+                    if ($existsUserReceivers == false) {
+                        $task_users_receivers = new TaskUsersReceivers();
+                        $task_users_receivers->task_id = $request->task_id;
+                        $task_users_receivers->user_id = $user->id;
+                        $task_users_receivers->save();
                     }
                 }
             }
@@ -1153,11 +1162,14 @@ class TaskController extends Controller
                 $task_roles_receivers = TaskRolesReceivers::find($task_roles_receivers[0]->id);
                 $task_roles_receivers->delete();
 
-                $users = User::where('setting_role_id', '=', $to_roles[$i]->id)->get();
+                //$users = User::where('setting_role_id', '=', $to_roles[$i]->id)->get();
+                $users = Role::findById($to_roles[$i]->id)->users;
                 foreach ($users as $key => $user) {
                     $task_user_status = TaskUserStatus::where('user_id', '=', $user->id)->where('task_id', '=', $request->task_id)->get();
                     $task_user_status = TaskUserStatus::find($task_user_status[0]->id);
                     $task_user_status->delete();
+
+                    $this->removeUsersReceivers($request->task_id, $user->id);
                 }
             }
 
