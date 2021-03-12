@@ -623,8 +623,11 @@ class MonitoringController extends Controller
 
     protected function checkPeriod($model_id, $date, $attendance_type, $attendance_summary_id, $range)
     {
-        $period_date = Carbon::parse($date)->subDays(23)->format('Y-m-d');
+        $period_date = Carbon::parse($date)->subDays(24)->format('Y-m-d');
         $date_to = Carbon::parse($date)->subDays(2)->format('Y-m-d');
+        if (auth()->user()->setting_role_id == 14) {
+            $date_to = Carbon::parse($date)->format('Y-m-d');
+        }
         $created_by = auth()->user()->setting_role_id;
         $msg = "";
         $icon = "";
@@ -632,7 +635,7 @@ class MonitoringController extends Controller
 
         $periods = Attendance::where([['model_id', $model_id], ['attendance_type', $attendance_type]])->whereBetween('date', [$period_date, $date_to])->count();
         $model = User::where('id', $model_id)->first();
-        if ($periods !== 0) {
+        if ($periods > 0) {
 //            $model = User::where('id', $model_id)->first();
             $last_period = Attendance::where([['model_id', $model_id], ['attendance_type', $attendance_type]])->whereBetween('date', [$period_date, $date_to])->latest('date')->first();
 
@@ -719,8 +722,7 @@ class MonitoringController extends Controller
                     'created_by' => auth()->user()->id,
                 ]);
 
-                $summary = AttendanceSummary::findOrFail($attendance_summary_id);
-
+                $summary = AttendanceSummary::findOrFail($attendance_summary_id);               
                 if (!empty(auth()->user()->nick)){
                     $comment = auth()->user()->nick. " ha reportado periodo";
                 }
@@ -742,6 +744,9 @@ class MonitoringController extends Controller
                         'setting_location_id' => $model->setting_location_id
                     ]);
                 }
+
+                $title = "Reporte de Periodo";
+                $this->createAttendanceTask($title, $comment, $model->nick, $model_id, $created_by);
 
                 $msg = "Se registró el periodo correctamente";
                 $code = 200;
