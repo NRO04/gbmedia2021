@@ -317,6 +317,7 @@ class PayrollController extends Controller
     public function getPayroll(Request $request)
     {
         $exists = Payroll::where('user_id', $request->user_id)->where('month', $request->month)->where('year', $request->year)->exists();
+        $user = User::where('id', $request->user_id)->first();
 
         if ($exists) {
             $payroll = Payroll::where('user_id', $request->user_id)->where('month', $request->month)->where('year', $request->year)->get(); //Nomina
@@ -334,11 +335,14 @@ class PayrollController extends Controller
 
             $night_surcharge = $this->payrollMovements($request->user_id, $date_from, $date_to, 1);
             $commissions = $this->payrollMovements($request->user_id, $date_from, $date_to, 2);
-            $movilization_help = $this->payrollMovements($request->user_id, $date_from, $date_to, 3);
+            //$movilization_help = $this->payrollMovements($request->user_id, $date_from, $date_to, 3);
+            $movilization_help = $user->mobilization_amount / 2;
             $record = $this->payrollMovements($request->user_id, $date_from, $date_to, 4);
             $bonus = $this->payrollMovements($request->user_id, $date_from, $date_to, 5);
-            $bonus_extra = $this->payrollMovements($request->user_id, $date_from, $date_to, 13);
-            $transportation_help = $this->payrollMovements($request->user_id, $date_from, $date_to, 6);
+            //$bonus_extra = $this->payrollMovements($request->user_id, $date_from, $date_to, 13);
+            $bonus_extra = $user->bonus_amount / 2;
+            //$transportation_help = $this->payrollMovements($request->user_id, $date_from, $date_to, 6);
+            $transportation_help = $user->transportation_aid_amount;
             $extra_hours = $this->payrollMovements($request->user_id, $date_from, $date_to, 14);
 
             $sums_amount = $night_surcharge + $commissions + $movilization_help + $record + $bonus + $transportation_help + $extra_hours; //Total Devengado
